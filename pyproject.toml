@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ios-mission-planner"
+version = "0.1.0"
+description = "Tools for in-orbit servicing mission analysis and planning"
+requires-python = ">=3.12"
+dependencies = [
+    "numpy",
+    "scipy",
+    "matplotlib"
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
