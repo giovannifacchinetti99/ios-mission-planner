@@ -1,6 +1,40 @@
 # ios-mission-planner
 
-Tools for in-orbit servicing (IOS) mission analysis and planning: relative orbital motion dynamics and propagation between a chief and a deputy satellite.
+A Python toolkit for **in-orbit servicing (IOS) mission analysis and planning**.
+
+The long-term goal is a mission planner that, given a deputy satellite on a parking orbit and a target (chief) satellite, computes an optimal sequence of maneuvers to bring the deputy from far-range phasing through close-range proximity operations to a final docking — accounting for orbital and attitude dynamics of both satellites, mission safety constraints (e.g. approach/keep-out ellipsoids), and eventually closed-loop relative navigation from noisy sensor data (e.g. LiDAR).
+
+This is being built up incrementally, starting from the dynamics layer. What exists today:
+
+- **Relative motion** between a chief and a deputy: the linearized Hill-Clohessy-Wiltshire (HCW) equations, both integrated numerically and solved in closed form via the Clohessy-Wiltshire state transition matrix (STM).
+- **Absolute (inertial) motion**: the two-body problem, numerically integrated or propagated analytically via classical orbital elements and Kepler's equation, plus the J2 (Earth oblateness) perturbation.
+
+![Natural motion circumnavigation — CW analytical vs. numerical](docs/images/cw_natural_motion_circumnavigation.png)
+
+*A drift-free, out-of-plane relative orbit (natural motion circumnavigation) around the chief, from [`examples/cw_comparison.ipynb`](examples/cw_comparison.ipynb): the CW closed-form solution and the numerical integration of the Hill equations agree down to numerical noise (bottom-right panel).*
+
+## Installation
+
+Requires Python >= 3.12.
+
+```bash
+git clone https://github.com/giovannifacchinetti99/ios-mission-planner.git
+cd ios-mission-planner
+
+python -m venv .venv
+.venv\Scripts\activate        # Windows
+# source .venv/bin/activate   # macOS/Linux
+
+pip install -e .
+```
+
+This installs the package in editable mode, so changes to `src/` are picked up immediately without reinstalling.
+
+To run the example notebooks you'll also need Jupyter:
+
+```bash
+pip install jupyter
+```
 
 ## Contents
 
@@ -12,15 +46,8 @@ Tools for in-orbit servicing (IOS) mission analysis and planning: relative orbit
 - `src/ios_mission_planner/dynamics/relative/cw.py` — Closed-form Clohessy-Wiltshire state transition matrix for analytical propagation of relative motion.
 - `src/ios_mission_planner/propagation/propagator.py` — Generic numerical propagator built on `scipy.integrate.solve_ivp`.
 - `src/ios_mission_planner/constants.py` — Physical constants (gravitational parameter, radius, J2) for common central bodies.
-- `examples/cw_comparison.ipynb` — Notebook comparing numerical (HCW) and analytical (CW state transition matrix) propagation.
-
-## Installation
-
-```bash
-pip install -e .
-```
-
-Requires Python >= 3.12.
+- `examples/cw_comparison.ipynb` — Numerical vs. analytical comparison of relative motion (HCW/CW), across several representative cases (drift-free ellipse, V-bar hold point, natural motion circumnavigation, ...).
+- `examples/two_body_comparison.ipynb` — Numerical vs. analytical comparison of absolute two-body motion, and the secular effect of the J2 perturbation.
 
 ## Usage
 
