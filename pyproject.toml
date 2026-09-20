@@ -9,9 +9,11 @@ description = "Tools for in-orbit servicing mission analysis and planning"
 requires-python = ">=3.12"
 dependencies = [
     "numpy",
-    "scipy",
     "matplotlib"
 ]
+# heyoka.py is a runtime dependency (see dynamics/*, propagation/heyoka_propagator.py)
+# but is intentionally not listed here: it has no Windows pip wheels, only
+# conda-forge builds. It comes from environment.yml, not this dependency list.
 
 [tool.setuptools.packages.find]
 where = ["src"]

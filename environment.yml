@@ -1,0 +1,13 @@
+name: ios-mission-planner
+channels:
+  - conda-forge
+  - nodefaults
+dependencies:
+  - python=3.13
+  - heyoka.py
+  - numpy
+  - matplotlib
+  - jupyter
+  - pip
+  - pip:
+      - -e .
