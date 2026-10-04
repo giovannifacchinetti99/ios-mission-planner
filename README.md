@@ -11,6 +11,7 @@ This is being built up incrementally, starting from the dynamics layer. What exi
 - **Frame transformations** between the inertial frame and the chief's LVLH frame, so that maneuvers designed with linear relative-motion tools can be flown and checked against nonlinear orbits.
 - **Relative-motion planning tools**: two-impulse CW targeting (the delta-v to go from one relative state to another in a fixed time), and a geometric decomposition of any relative orbit into a drift-free 2:1 ellipse plus drift, the basis for passively safe parking orbits.
 - **Numerical propagation** via [heyoka.py](https://github.com/bluescarni/heyoka.py): equations of motion are defined as symbolic expressions and integrated with an adaptive-order Taylor series, JIT-compiled via LLVM, instead of a fixed-order Runge-Kutta scheme.
+- **Safety checks**: keep-out zones around the chief, passive safety of planned burns against their own failure, and conical approach corridors, checked against both the linear relative-motion tools above and the nonlinear propagation.
 
 ![Natural motion circumnavigation: CW analytical vs. numerical](docs/images/cw_natural_motion_circumnavigation.png)
 
@@ -46,8 +47,12 @@ python -m ipykernel install --user --name ios-mission-planner --display-name "Py
 - `src/ios_mission_planner/dynamics/relative/lvlh.py`: inertial to chief LVLH frame transformations of position and velocity.
 - `src/ios_mission_planner/propagation/heyoka_propagator.py`: generic numerical propagator built on heyoka.py's Taylor-adaptive integrator.
 - `src/ios_mission_planner/constants.py`: physical constants (gravitational parameter, radius, J2) for common central bodies.
+- `src/ios_mission_planner/safety/keepout.py`: ellipsoidal keep-out zones around the chief, and a check of a relative trajectory against one.
+- `src/ios_mission_planner/safety/passive_safety.py`: checks whether a planned burn's own failure to execute stays clear of a keep-out zone for a given time.
+- `src/ios_mission_planner/safety/corridor.py`: conical approach corridors around a reference direction (e.g. the V-bar), and a check of a relative trajectory against one.
 - `examples/cw_fundamentals.ipynb`: foundations of relative motion. How heyoka is used to integrate the Hill equations, free-motion cases such as the drift-free ellipse and the natural motion circumnavigation, two-impulse targeting, relative orbit elements explained one by one, and a capstone insertion onto a passively safe 2:1 ellipse.
 - `examples/rendezvous_to_safety_ellipse.ipynb`: a complete approach from a parking orbit through phasing, a Hohmann transfer to a 5 km hold point, a far-range CW hop and insertion onto a 2:1 safety ellipse, flown with nonlinear two-body dynamics, with a delta-v budget and a J2 experiment.
+- `examples/safety_fundamentals.ipynb`: keep-out zones, passive safety of planned burns, and approach corridors, demonstrated on the 2:1 safety ellipse and on two example hops that each pass one check and fail the other.
 
 ## Usage
 
