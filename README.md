@@ -2,7 +2,7 @@
 
 A Python toolkit for **in-orbit servicing (IOS) mission analysis and planning**.
 
-The long-term goal is a mission planner that, given a deputy satellite on a parking orbit and a target (chief) satellite, computes an optimal sequence of maneuvers to bring the deputy from far-range phasing through close-range proximity operations to a final docking — accounting for orbital and attitude dynamics of both satellites, mission safety constraints (e.g. approach/keep-out ellipsoids), and eventually closed-loop relative navigation from noisy sensor data (e.g. LiDAR).
+The long-term goal is a mission planner that, given a deputy satellite on a parking orbit and a target (chief) satellite, computes an optimal sequence of maneuvers to bring the deputy from far-range phasing through close-range proximity operations to a final docking, accounting for the orbital and attitude dynamics of both satellites, mission safety constraints such as approach and keep-out ellipsoids, and eventually closed-loop relative navigation from noisy sensor data such as LiDAR.
 
 This is being built up incrementally, starting from the dynamics layer. What exists today:
 
@@ -12,9 +12,9 @@ This is being built up incrementally, starting from the dynamics layer. What exi
 - **Relative-motion planning tools**: two-impulse CW targeting (the delta-v to go from one relative state to another in a fixed time), and a geometric decomposition of any relative orbit into a drift-free 2:1 ellipse plus drift, the basis for passively safe parking orbits.
 - **Numerical propagation** via [heyoka.py](https://github.com/bluescarni/heyoka.py): equations of motion are defined as symbolic expressions and integrated with an adaptive-order Taylor series, JIT-compiled via LLVM, instead of a fixed-order Runge-Kutta scheme.
 
-![Natural motion circumnavigation — CW analytical vs. numerical](docs/images/cw_natural_motion_circumnavigation.png)
+![Natural motion circumnavigation: CW analytical vs. numerical](docs/images/cw_natural_motion_circumnavigation.png)
 
-*A drift-free, out-of-plane relative orbit (natural motion circumnavigation) around the chief, from [`examples/cw_comparison.ipynb`](examples/cw_comparison.ipynb): the CW closed-form solution and the numerical integration of the Hill equations agree down to numerical noise (bottom-right panel).*
+*A drift-free, out-of-plane relative orbit (natural motion circumnavigation) around the chief, from [`examples/cw_fundamentals.ipynb`](examples/cw_fundamentals.ipynb): the CW closed-form solution and the numerical integration of the Hill equations agree down to numerical noise (bottom-right panel).*
 
 ## Installation
 
@@ -38,17 +38,16 @@ python -m ipykernel install --user --name ios-mission-planner --display-name "Py
 
 ## Contents
 
-- `src/ios_mission_planner/dynamics/orbital/two_body.py` — Two-body equations of motion in an inertial frame, as a symbolic heyoka ODE system, for absolute orbit propagation.
-- `src/ios_mission_planner/dynamics/orbital/perturbations.py` — Two-body dynamics with J2 (oblateness) perturbation, as a symbolic heyoka ODE system.
-- `src/ios_mission_planner/dynamics/relative/hill.py` — Hill-Clohessy-Wiltshire (HCW) equations of motion for a deputy relative to a chief on a circular reference orbit, as a symbolic heyoka ODE system.
-- `src/ios_mission_planner/dynamics/relative/cw.py` — Closed-form Clohessy-Wiltshire state transition matrix for analytical propagation of relative motion, and two-impulse targeting built on it.
-- `src/ios_mission_planner/dynamics/relative/relative_orbit.py` — Conversion between a relative state and its geometric description (2:1 ellipse size, phase, center, drift), and the drift-free ellipse through a given point.
-- `src/ios_mission_planner/dynamics/relative/lvlh.py` — Inertial <-> chief LVLH frame transformations of position and velocity.
-- `src/ios_mission_planner/propagation/heyoka_propagator.py` — Generic numerical propagator built on heyoka.py's Taylor-adaptive integrator.
-- `src/ios_mission_planner/constants.py` — Physical constants (gravitational parameter, radius, J2) for common central bodies.
-- `examples/cw_comparison.ipynb` — Numerical vs. analytical comparison of relative motion (HCW/CW), across several representative cases (drift-free ellipse, V-bar hold point, natural motion circumnavigation, ...), including a walkthrough of how heyoka is used.
-- `examples/cw_targeting_and_relative_orbits.ipynb` — Relative orbit elements and two-impulse targeting, ending with the insertion of a deputy onto a passively safe 2:1 ellipse, verified by integrating the Hill equations with heyoka.
-- `examples/rendezvous_to_safety_ellipse.ipynb` — A complete approach: parking orbit, phasing, Hohmann to a 5 km hold point, far-range CW hop and insertion onto a 2:1 safety ellipse, flown with nonlinear two-body dynamics, with a delta-v budget and a J2 experiment.
+- `src/ios_mission_planner/dynamics/orbital/two_body.py`: two-body equations of motion in an inertial frame, as a symbolic heyoka ODE system, for absolute orbit propagation.
+- `src/ios_mission_planner/dynamics/orbital/perturbations.py`: two-body dynamics with the J2 (oblateness) perturbation, as a symbolic heyoka ODE system.
+- `src/ios_mission_planner/dynamics/relative/hill.py`: Hill-Clohessy-Wiltshire (HCW) equations of motion for a deputy relative to a chief on a circular reference orbit, as a symbolic heyoka ODE system.
+- `src/ios_mission_planner/dynamics/relative/cw.py`: closed-form Clohessy-Wiltshire state transition matrix for analytical propagation of relative motion, and two-impulse targeting built on it.
+- `src/ios_mission_planner/dynamics/relative/relative_orbit.py`: conversion between a relative state and its geometric description (2:1 ellipse size, phase, center, drift), and the drift-free ellipse through a given point.
+- `src/ios_mission_planner/dynamics/relative/lvlh.py`: inertial to chief LVLH frame transformations of position and velocity.
+- `src/ios_mission_planner/propagation/heyoka_propagator.py`: generic numerical propagator built on heyoka.py's Taylor-adaptive integrator.
+- `src/ios_mission_planner/constants.py`: physical constants (gravitational parameter, radius, J2) for common central bodies.
+- `examples/cw_fundamentals.ipynb`: foundations of relative motion. How heyoka is used to integrate the Hill equations, free-motion cases such as the drift-free ellipse and the natural motion circumnavigation, two-impulse targeting, relative orbit elements explained one by one, and a capstone insertion onto a passively safe 2:1 ellipse.
+- `examples/rendezvous_to_safety_ellipse.ipynb`: a complete approach from a parking orbit through phasing, a Hohmann transfer to a 5 km hold point, a far-range CW hop and insertion onto a 2:1 safety ellipse, flown with nonlinear two-body dynamics, with a delta-v budget and a J2 experiment.
 
 ## Usage
 
