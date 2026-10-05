@@ -1,21 +1,18 @@
 # ios-mission-planner
 
-A Python toolkit for **in-orbit servicing (IOS) mission analysis and planning**.
-
-The long-term goal is a mission planner that, given a deputy satellite on a parking orbit and a target (chief) satellite, computes an optimal sequence of maneuvers to bring the deputy from far-range phasing through close-range proximity operations to a final docking, accounting for the orbital and attitude dynamics of both satellites, mission safety constraints such as approach and keep-out ellipsoids, and eventually closed-loop relative navigation from noisy sensor data such as LiDAR.
-
-This is being built up incrementally, starting from the dynamics layer. What exists today:
-
-- **Relative motion** between a chief and a deputy: the linearized Hill-Clohessy-Wiltshire (HCW) equations, both integrated numerically and solved in closed form via the Clohessy-Wiltshire state transition matrix (STM).
-- **Absolute (inertial) motion**: the two-body problem plus the J2 (Earth oblateness) perturbation.
-- **Frame transformations** between the inertial frame and the chief's LVLH frame, so that maneuvers designed with linear relative-motion tools can be flown and checked against nonlinear orbits.
-- **Relative-motion planning tools**: two-impulse CW targeting (the delta-v to go from one relative state to another in a fixed time), and a geometric decomposition of any relative orbit into a drift-free 2:1 ellipse plus drift, the basis for passively safe parking orbits.
-- **Numerical propagation** via [heyoka.py](https://github.com/bluescarni/heyoka.py): equations of motion are defined as symbolic expressions and integrated with an adaptive-order Taylor series, JIT-compiled via LLVM, instead of a fixed-order Runge-Kutta scheme.
-- **Safety checks**: keep-out zones around the chief, passive safety of planned burns against their own failure, and conical approach corridors, checked against both the linear relative-motion tools above and the nonlinear propagation.
+A Python toolkit for **in-orbit servicing (IOS) mission analysis and planning**: it designs the maneuvers that take a deputy satellite from a parking orbit to a safe rendezvous with a chief, flies them against nonlinear orbital dynamics instead of just the linear model used to design them, and checks the result for collision and safety risk.
 
 ![Natural motion circumnavigation: CW analytical vs. numerical](docs/images/cw_natural_motion_circumnavigation.png)
 
-*A drift-free, out-of-plane relative orbit (natural motion circumnavigation) around the chief, from [`examples/cw_fundamentals.ipynb`](examples/cw_fundamentals.ipynb): the CW closed-form solution and the numerical integration of the Hill equations agree down to numerical noise (bottom-right panel).*
+*A drift-free, out-of-plane relative orbit (natural motion circumnavigation) around the chief, from [`examples/cw_fundamentals.ipynb`](examples/cw_fundamentals.ipynb): the closed-form Clohessy-Wiltshire solution and the numerical integration of the Hill equations agree down to numerical noise.*
+
+![The far-range approach and the resulting safety ellipse](docs/images/rendezvous_safety_ellipse.png)
+
+*The far-range approach from a 5 km hold point onto a 2:1 safety ellipse, from [`examples/rendezvous_to_safety_ellipse.ipynb`](examples/rendezvous_to_safety_ellipse.ipynb): flown with nonlinear two-body dynamics, closing within a few metres of the design.*
+
+![Safety-checking the whole mission against a keep-out zone](docs/images/mission_safety_check.png)
+
+*Range to the chief over the whole rendezvous mission, checked against a keep-out zone in [`examples/rendezvous_safety_assessment.ipynb`](examples/rendezvous_safety_assessment.ipynb): deterministic margin, passive safety, approach corridor, J2 station-keeping and a Monte Carlo collision probability all run on the same flown trajectory.*
 
 ## Installation
 
@@ -36,23 +33,6 @@ To run the example notebooks from this environment's Jupyter kernel:
 ```bash
 python -m ipykernel install --user --name ios-mission-planner --display-name "Python (ios-mission-planner)"
 ```
-
-## Contents
-
-- `src/ios_mission_planner/dynamics/orbital/two_body.py`: two-body equations of motion in an inertial frame, as a symbolic heyoka ODE system, for absolute orbit propagation.
-- `src/ios_mission_planner/dynamics/orbital/perturbations.py`: two-body dynamics with the J2 (oblateness) perturbation, as a symbolic heyoka ODE system.
-- `src/ios_mission_planner/dynamics/relative/hill.py`: Hill-Clohessy-Wiltshire (HCW) equations of motion for a deputy relative to a chief on a circular reference orbit, as a symbolic heyoka ODE system.
-- `src/ios_mission_planner/dynamics/relative/cw.py`: closed-form Clohessy-Wiltshire state transition matrix for analytical propagation of relative motion, and two-impulse targeting built on it.
-- `src/ios_mission_planner/dynamics/relative/relative_orbit.py`: conversion between a relative state and its geometric description (2:1 ellipse size, phase, center, drift), and the drift-free ellipse through a given point.
-- `src/ios_mission_planner/dynamics/relative/lvlh.py`: inertial to chief LVLH frame transformations of position and velocity.
-- `src/ios_mission_planner/propagation/heyoka_propagator.py`: generic numerical propagator built on heyoka.py's Taylor-adaptive integrator.
-- `src/ios_mission_planner/constants.py`: physical constants (gravitational parameter, radius, J2) for common central bodies.
-- `src/ios_mission_planner/safety/keepout.py`: ellipsoidal keep-out zones around the chief, and a check of a relative trajectory against one.
-- `src/ios_mission_planner/safety/passive_safety.py`: checks whether a planned burn's own failure to execute stays clear of a keep-out zone for a given time.
-- `src/ios_mission_planner/safety/corridor.py`: conical approach corridors around a reference direction (e.g. the V-bar), and a check of a relative trajectory against one.
-- `examples/cw_fundamentals.ipynb`: foundations of relative motion. How heyoka is used to integrate the Hill equations, free-motion cases such as the drift-free ellipse and the natural motion circumnavigation, two-impulse targeting, relative orbit elements explained one by one, and a capstone insertion onto a passively safe 2:1 ellipse.
-- `examples/rendezvous_to_safety_ellipse.ipynb`: a complete approach from a parking orbit through phasing, a Hohmann transfer to a 5 km hold point, a far-range CW hop and insertion onto a 2:1 safety ellipse, flown with nonlinear two-body dynamics, with a delta-v budget and a J2 experiment.
-- `examples/safety_fundamentals.ipynb`: keep-out zones, passive safety of planned burns, and approach corridors, demonstrated on the 2:1 safety ellipse and on two example hops that each pass one check and fail the other, plus a J2 station-keeping budget for the ellipse.
 
 ## Usage
 
@@ -98,4 +78,16 @@ dv1, dv2 = cw_targeting(
     rf=[0.0, -200.0, 0.0], vf=[0.0, 0.0, 0.0],
     t=0.75 * T, n=n,
 )
+```
+
+Checking a relative trajectory against a keep-out zone:
+
+```python
+import numpy as np
+from ios_mission_planner.safety.keepout import KeepOutEllipsoid, check_trajectory
+
+zone = KeepOutEllipsoid(a=20.0, b=20.0, c=20.0)  # metres, chief-centred
+positions = np.array([[100.0, 0.0, 0.0], [15.0, 0.0, 0.0]])  # relative positions over time
+
+violated, margin, mask = check_trajectory(positions, zone)
 ```
