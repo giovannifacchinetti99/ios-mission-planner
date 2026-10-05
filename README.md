@@ -52,7 +52,7 @@ python -m ipykernel install --user --name ios-mission-planner --display-name "Py
 - `src/ios_mission_planner/safety/corridor.py`: conical approach corridors around a reference direction (e.g. the V-bar), and a check of a relative trajectory against one.
 - `examples/cw_fundamentals.ipynb`: foundations of relative motion. How heyoka is used to integrate the Hill equations, free-motion cases such as the drift-free ellipse and the natural motion circumnavigation, two-impulse targeting, relative orbit elements explained one by one, and a capstone insertion onto a passively safe 2:1 ellipse.
 - `examples/rendezvous_to_safety_ellipse.ipynb`: a complete approach from a parking orbit through phasing, a Hohmann transfer to a 5 km hold point, a far-range CW hop and insertion onto a 2:1 safety ellipse, flown with nonlinear two-body dynamics, with a delta-v budget and a J2 experiment.
-- `examples/safety_fundamentals.ipynb`: keep-out zones, passive safety of planned burns, and approach corridors, demonstrated on the 2:1 safety ellipse and on two example hops that each pass one check and fail the other.
+- `examples/safety_fundamentals.ipynb`: keep-out zones, passive safety of planned burns, and approach corridors, demonstrated on the 2:1 safety ellipse and on two example hops that each pass one check and fail the other, plus a J2 station-keeping budget for the ellipse.
 
 ## Usage
 

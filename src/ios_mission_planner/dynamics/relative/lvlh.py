@@ -62,7 +62,7 @@ def inertial_to_lvlh(chief_state, deputy_state):
     omega = np.array([0.0, 0.0, lvlh_angular_rate(chief_state)])
 
     rho = rotation @ (deputy_state[:3] - chief_state[:3])
-    rho_dot = rotation @ (deputy_state[3:] - chief_state[3:]) - np.cross(omega, rho)
+    rho_dot = rotation @ (deputy_state[3:] - chief_state[3:]) - np.cross(omega, rho) # transport theorem: I need to add the term considering omega, beacuse lvlh frame is non-inertial
 
     return np.concatenate([rho, rho_dot])
 
