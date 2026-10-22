@@ -14,6 +14,10 @@ A Python toolkit for **in-orbit servicing (IOS) mission analysis and planning**:
 
 *Range to the chief over the whole rendezvous mission, checked against a keep-out zone in [`examples/rendezvous_safety_assessment.ipynb`](examples/rendezvous_safety_assessment.ipynb): deterministic margin, passive safety, approach corridor, J2 station-keeping and a Monte Carlo collision probability all run on the same flown trajectory.*
 
+![Delta-v budget by mission phase](docs/images/mission_budget.png)
+
+*The full mission, phasing through disposal, as a delta-v budget in [`examples/mission_budget.ipynb`](examples/mission_budget.ipynb): every phase margined by how mature its design is, converted to propellant mass through the rocket equation, and checked against a low-thrust alternative.*
+
 ## Installation
 
 Requires [conda](https://conda.io) (e.g. [Miniforge](https://github.com/conda-forge/miniforge)). The dynamics modules depend on [heyoka.py](https://github.com/bluescarni/heyoka.py), which ships prebuilt binaries only through conda-forge (no Windows pip wheels), so this project is conda-first rather than pip/venv-based.
@@ -90,4 +94,19 @@ zone = KeepOutEllipsoid(a=20.0, b=20.0, c=20.0)  # metres, chief-centred
 positions = np.array([[100.0, 0.0, 0.0], [15.0, 0.0, 0.0]])  # relative positions over time
 
 violated, margin, mask = check_trajectory(positions, zone)
+```
+
+A margined delta-v budget, converted to propellant mass through the rocket equation:
+
+```python
+from ios_mission_planner.budget.margins import BudgetLine, MATURITY_MARGIN, total_delta_v
+from ios_mission_planner.budget.propellant import initial_mass
+
+lines = [
+    BudgetLine("phasing burn", 55.9, MATURITY_MARGIN["analyzed"]),
+    BudgetLine("station-keeping dwell", 13.3, MATURITY_MARGIN["preliminary"]),
+]
+dv_total = total_delta_v(lines, system_margin=0.10)  # + a 10% mission reserve
+
+propellant_kg = initial_mass(dv_total, isp=220.0, m_dry=150.0) - 150.0
 ```
