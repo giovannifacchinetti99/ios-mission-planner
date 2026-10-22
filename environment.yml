@@ -8,6 +8,7 @@ dependencies:
   - numpy
   - matplotlib
   - jupyter
+  - sgp4
   - pip
   - pip:
       - -e .
