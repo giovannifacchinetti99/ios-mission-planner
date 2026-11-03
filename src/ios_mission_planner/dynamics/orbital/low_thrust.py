@@ -49,3 +49,53 @@ def low_thrust_dynamics_symbolic():
         (vz, az_grav + thrust_accel * uz),
         (m, -thrust / (isp * G0)),
     ]
+
+
+def low_thrust_tangential_dynamics_symbolic():
+    """
+    Two-body motion with continuous low-thrust propulsion steered along
+    the instantaneous velocity direction, as a symbolic heyoka ODE system.
+
+    Unlike low_thrust_dynamics_symbolic, the thrust direction here is not
+    a fixed inertial vector: it is +-v/|v|, recomputed at every instant
+    from the velocity state itself, so it keeps tracking prograde (or
+    retrograde) as gravity turns the velocity vector. This is the
+    standard continuous-tangential-thrust model for orbit raising or
+    lowering, and it is exact for burns of any duration, unlike the
+    fixed-direction model, which is only a good approximation for burns
+    short compared to the orbital period.
+
+    State vector: [x, y, z, vx, vy, vz, m], position in km, velocity in
+    km/s, mass in kg.
+    Runtime parameters: par[0] = mu [km^3/s^2], par[1] = F, thrust force
+    [N], par[2] = isp, specific impulse [s], par[3] = sign, +1 for
+    prograde thrust (raises the orbit) or -1 for retrograde (lowers it).
+
+    Returns
+    -------
+    list[tuple[heyoka.expression, heyoka.expression]]
+        Symbolic system, for use with
+        ios_mission_planner.propagation.heyoka_propagator.propagate.
+
+    Author: Giovanni Facchinetti, 2026
+    """
+
+    x, y, z, vx, vy, vz, m = hy.make_vars("x", "y", "z", "vx", "vy", "vz", "m")
+    mu = hy.par[0]
+    thrust, isp, sign = hy.par[1], hy.par[2], hy.par[3]
+
+    ax_grav, ay_grav, az_grav = two_body_acceleration_symbolic(x, y, z, mu)
+    thrust_accel = thrust / m * 1e-3  # N / kg = m/s^2 -> km/s^2
+
+    speed = hy.sqrt(vx**2 + vy**2 + vz**2)
+    tangential = sign * thrust_accel / speed
+
+    return [
+        (x, vx),
+        (y, vy),
+        (z, vz),
+        (vx, ax_grav + tangential * vx),
+        (vy, ay_grav + tangential * vy),
+        (vz, az_grav + tangential * vz),
+        (m, -thrust / (isp * G0)),
+    ]
