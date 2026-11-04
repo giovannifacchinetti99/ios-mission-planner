@@ -61,21 +61,20 @@ Reference: Vallado, *Fundamentals of Astrodynamics and Applications*.
 A Cartesian state $[\vect r, \vect v]$ is six numbers, but they mix position
 and velocity in a way that is hard to picture. The six classical orbital
 elements re-express the same information as a size, a shape, an orientation,
-and a position along the orbit, each with a direct geometric meaning:
+and a position along the orbit, each with a direct geometric meaning.
 
-- $a$ — semi-major axis: half the long axis of the ellipse, i.e. the orbit's
-  size.
-- $e$ — eccentricity: how elongated the ellipse is ($e=0$ circular, $0<e<1$
-  elliptical).
-- $i$ — inclination: the angle between the orbit plane and the Earth's
-  equatorial plane.
-- $\Omega$ — right ascension of the ascending node (RAAN): where the orbit
-  crosses the equator going northward, measured in the equatorial plane from
-  a reference direction.
-- $\omega$ — argument of perigee: the angle, measured in the orbit plane from
-  the ascending node, to perigee (closest approach).
-- $M$ — mean anomaly: where the spacecraft is along the orbit right now,
-  expressed as an angle that advances at the orbit's *average* rate.
+The semi-major axis $a$ is half the long axis of the ellipse, so it sets the
+orbit's overall size. The eccentricity $e$ describes its shape: zero for a
+circle, and growing toward one as the ellipse becomes more elongated. Three
+angles fix the orbit's orientation in space: the inclination $i$ is the angle
+between the orbit plane and the Earth's equatorial plane; the right ascension
+of the ascending node $\Omega$ locates where the orbit crosses the equator
+going northward, measured in the equatorial plane from a reference
+direction; and the argument of perigee $\omega$ is the angle, measured within
+the orbit plane from that ascending node, to perigee, the point of closest
+approach. The sixth element, the mean anomaly $M$, is not a fixed property of
+the orbit but says where the spacecraft currently is along it, expressed as
+an angle that advances at the orbit's *average* angular rate.
 
 The orbit's size and shape come directly from the conserved energy and
 angular momentum: $a$ from $\mathcal E$ as above, and the eccentricity vector
@@ -85,7 +84,7 @@ $$
 (\vect r \cdot \vect v)\,\vect v\right],
 $$
 
-a vector that points from the focus toward perigee with magnitude $e$ — this
+a vector that points from the focus toward perigee with magnitude $e$. This
 is exactly the `e_vec` computed in `classical_elements_from_state`. The
 orientation angles $i$, $\Omega$, $\omega$ follow from the geometry of
 $\vect h$, the node vector $\vect n = \hat{\vect z} \times \vect h$, and

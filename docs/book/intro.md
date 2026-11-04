@@ -10,25 +10,28 @@ the theory applied to an actual case rather than just stated.
 
 ## What the project does
 
-`ios-mission-planner` analyzes in-orbit servicing (IOS) missions: a servicer
-spacecraft (the "deputy") approaching, inspecting, or berthing with a target
-spacecraft (the "chief"). The analysis is organized in four layers, each
-building on the one before it.
+`ios-mission-planner` analyzes in-orbit servicing (IOS) missions, in which a
+servicer spacecraft (the "deputy") approaches, inspects, or berths with a
+target spacecraft (the "chief"). The analysis is organized in four layers,
+each building on the one before it.
 
-**Layer 1 — Dynamics.** How the chief and deputy move, both in an absolute
-sense (orbiting the Earth) and relative to each other (the deputy's motion as
-seen from the chief). This is the subject of this book's first two chapters.
+The first layer is dynamics: how the chief and deputy move, both in an
+absolute sense as they orbit the Earth, and relative to each other, meaning
+the deputy's motion as seen from the chief. This is the subject of this
+book's first two chapters.
 
-**Layer 2 — Relative orbit elements and safety.** A compact, geometric way to
-describe and design relative orbits (passively safe ellipses, hold points,
-approach corridors) built on top of the Layer 1 dynamics.
+The second layer builds relative orbit elements and safety analysis on top of
+that dynamics: a compact, geometric way to describe and design relative
+orbits such as passively safe ellipses, hold points, and approach corridors.
 
-**Layer 3 — Maneuver design and propagation.** Turning a desired relative
-trajectory into actual burns: impulsive two-impulse targeting, continuous
-low-thrust steering, and propellant budgeting via the rocket equation.
+The third layer is maneuver design and propagation, turning a desired
+relative trajectory into actual burns, whether impulsive two-impulse
+targeting or continuous low-thrust steering, with the resulting propellant
+cost budgeted through the rocket equation.
 
-**Layer 4 — Mission-level analysis.** Stringing maneuvers together into a full
-mission timeline and budget, validated against real tracked objects.
+The fourth and final layer is mission-level analysis, stringing maneuvers
+together into a full mission timeline and budget, validated against real
+tracked objects.
 
 ## How to read this book
 

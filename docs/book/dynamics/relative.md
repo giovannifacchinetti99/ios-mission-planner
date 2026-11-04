@@ -18,15 +18,12 @@ Code: {py:func}`lvlh_rotation
 Reference: *Analytical Mechanics of Space Systems*, Fourth Edition.
 
 "As seen from the chief" needs a frame attached to the chief, and the
-standard choice is the **local-vertical, local-horizontal (LVLH)** frame:
-
-- $\hat x$, radial: along the chief's position vector, pointing away from the
-  Earth.
-- $\hat z$, cross-track: along the chief's orbit normal $\vect h_c = \vect
-  r_c \times \vect v_c$.
-- $\hat y$, along-track: completing the right-handed triad, $\hat y = \hat z
-  \times \hat x$; for a circular reference orbit this points along the
-  velocity.
+standard choice is the **local-vertical, local-horizontal (LVLH)** frame. Its
+radial axis $\hat x$ runs along the chief's position vector, pointing away
+from the Earth; its cross-track axis $\hat z$ runs along the chief's orbit
+normal, $\vect h_c = \vect r_c \times \vect v_c$; and its along-track axis
+$\hat y$ completes the right-handed triad, $\hat y = \hat z \times \hat x$,
+which for a circular reference orbit points along the velocity.
 
 This triad rotates with the chief as it orbits, so it is a non-inertial
 frame. `lvlh_rotation` builds the $3\times3$ rotation matrix from inertial to
@@ -87,8 +84,8 @@ A few structural features are worth noting directly from the equations: the
 in-plane motion ($x$, $y$) is coupled through the Coriolis-like $2n\dot
 {(\cdot)}$ terms, since the frame is rotating, while the out-of-plane motion
 $z$ is a completely decoupled, undamped harmonic oscillator at the chief's
-orbital frequency $n$ — cross-track relative motion never interacts with the
-in-plane motion at this order of approximation.
+orbital frequency $n$, so cross-track relative motion never interacts with
+the in-plane motion at this order of approximation.
 
 ## The closed-form solution and its state transition matrix
 
@@ -150,9 +147,9 @@ $\Delta v_2$ matches it to whatever is wanted on arrival. This only works
 when $\Phi_{\rho v}$ is invertible; it loses rank at specific times of flight
 (multiples of a full orbit for the in-plane block, half-orbits for the
 out-of-plane one), where the required $\Delta v$ either blows up or is not
-unique — a geometric consequence of the relative orbit returning to (or
-passing through) its own starting point at those exact times regardless of
-how it got there.
+unique. This is a geometric consequence of the relative orbit returning to,
+or passing through, its own starting point at those exact times regardless
+of how it got there.
 
 ## Relative orbit elements: a geometric reading of the same solution
 
@@ -175,7 +172,7 @@ y(t) = y_c + \dot y_{\mathrm{drift}}\,t - 2\rho\sin(nt+\alpha), \qquad
 z(t) = \rho_z \cos(nt+\beta).
 $$
 
-In words: in-plane, the deputy traces a **2:1 ellipse** (its along-track
+In other words, in-plane the deputy traces a **2:1 ellipse** (its along-track
 semi-axis is always exactly twice its radial semi-axis, a direct consequence
 of the $2n\dot{(\cdot)}$ coupling in the HCW equations) of radial size $\rho$
 and phase $\alpha$, centered at radial offset $x_{\mathrm{off}}$; if that
@@ -190,9 +187,9 @@ relative state. This is the `RelativeOrbit` dataclass:
 coefficients between the Cartesian solution and the grouped form above), and
 `state_from_relative_orbit` is the inverse.
 
-The practical payoff is design, not just description: setting
+The practical payoff is design, not just description. Setting
 $x_{\mathrm{off}}=0$ by construction (via `state_from_relative_orbit`) gives
-a **drift-free**, perfectly periodic relative orbit — the natural starting
+a **drift-free**, perfectly periodic relative orbit, the natural starting
 point for a passively safe hold or inspection ellipse, since it requires no
 station-keeping to stay bounded. This connects directly to the
 safety-ellipse machinery used elsewhere in the project.
