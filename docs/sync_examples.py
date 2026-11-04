@@ -16,12 +16,21 @@ EXAMPLES_DST = REPO_ROOT / "docs" / "book" / "examples"
 
 NOTEBOOKS = [
     "cw_fundamentals.ipynb",
+    "j2_roe_state_transition.ipynb",
+    "safety_fundamentals.ipynb",
+    "mission_budget.ipynb",
+    "cosmos2612_iceye_x36_rpo.ipynb",
+]
+
+EXTRA_FILES = [
+    "spacetrack_68762.tle",
+    "spacetrack_59103.tle",
 ]
 
 
 def main():
     EXAMPLES_DST.mkdir(parents=True, exist_ok=True)
-    for name in NOTEBOOKS:
+    for name in NOTEBOOKS + EXTRA_FILES:
         shutil.copy2(EXAMPLES_SRC / name, EXAMPLES_DST / name)
         print(f"synced {name}")
 

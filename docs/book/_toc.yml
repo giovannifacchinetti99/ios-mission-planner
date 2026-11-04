@@ -7,3 +7,21 @@ parts:
       - file: dynamics/relative
         sections:
           - file: examples/cw_fundamentals
+  - caption: Relative orbit elements & safety
+    chapters:
+      - file: dynamics/roe_j2
+        sections:
+          - file: examples/j2_roe_state_transition
+      - file: safety
+        sections:
+          - file: examples/safety_fundamentals
+  - caption: Mission budget
+    chapters:
+      - file: budget
+        sections:
+          - file: examples/mission_budget
+  - caption: Real case study
+    chapters:
+      - file: case_study
+        sections:
+          - file: examples/cosmos2612_iceye_x36_rpo
