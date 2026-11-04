@@ -2,7 +2,7 @@
 
 A Python toolkit for **in-orbit servicing (IOS) mission analysis and planning**: it designs the maneuvers that take a deputy satellite from a parking orbit to a safe rendezvous with a chief, flies them against nonlinear orbital dynamics instead of just the linear model used to design them, and checks the result for collision and safety risk.
 
-📖 **[Read the documentation book](https://giovannifacchinetti99.github.io/ios-mission-planner/)** — the theory behind the code (formulas, derivations, citations), with worked example notebooks.
+**[>> Read the documentation](https://giovannifacchinetti99.github.io/ios-mission-planner/)** 
 
 ![Natural motion circumnavigation: CW analytical vs. numerical](docs/images/cw_natural_motion_circumnavigation.png)
 
