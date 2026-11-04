@@ -37,6 +37,9 @@ jobs:
       - name: Build the book
         run: jupyter-book build docs/book
 
+      - name: Disable Jekyll processing
+        run: touch docs/book/_build/html/.nojekyll
+
       - uses: actions/upload-pages-artifact@v3
         with:
           path: docs/book/_build/html
