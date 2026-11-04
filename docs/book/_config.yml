@@ -1,0 +1,28 @@
+title: IOS Mission Planner
+author: Giovanni Facchinetti
+logo: ""
+
+execute:
+  execute_notebooks: 'off'
+
+html:
+  use_repository_button: true
+  use_issues_button: true
+
+repository:
+  url: https://github.com/giovannifacchinetti99/ios-mission-planner
+  branch: master
+
+parse:
+  myst_enable_extensions:
+    - amsmath
+    - dollarmath
+    - colon_fence
+
+sphinx:
+  config:
+    html_theme: sphinx_book_theme
+    mathjax3_config:
+      tex:
+        macros:
+          vect: ["\\boldsymbol{#1}", 1]

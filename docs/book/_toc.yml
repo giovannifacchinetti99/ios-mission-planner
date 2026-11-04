@@ -1,0 +1,9 @@
+format: jb-book
+root: intro
+parts:
+  - caption: Dynamics
+    chapters:
+      - file: dynamics/absolute
+      - file: dynamics/relative
+        sections:
+          - file: examples/cw_fundamentals
