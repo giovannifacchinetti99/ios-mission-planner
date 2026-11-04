@@ -20,3 +20,19 @@ docs/.venv/Scripts/jupyter-book build docs/book
 the listed notebooks changes under `examples/`, since `docs/book/examples/`
 is just a gitignored copy used to keep the book's source root inside
 `docs/book/`.
+
+## Publishing
+
+The published book, at <https://giovannifacchinetti99.github.io/ios-mission-planner/>,
+is built and deployed automatically by
+[`.github/workflows/docs.yml`](../.github/workflows/docs.yml) on every push to
+`master` that touches `docs/` or `examples/`. The workflow repeats the same
+steps as above (install `docs/requirements.txt`, run `sync_examples.py`,
+`jupyter-book build docs/book`), then adds a `.nojekyll` file to the built
+`docs/book/_build/html/` before uploading it as the Pages artifact. Without
+that file, GitHub Pages runs the output through Jekyll, which ignores any
+folder starting with an underscore, including `_static/` and
+`_sphinx_design_static/`, the folders holding the Sphinx Book Theme's
+JavaScript and CSS. The sidebar then renders unstyled and its toggle, search,
+and current-section highlighting stop working, even though a local build
+looks fine, since a local build never goes through Jekyll.
