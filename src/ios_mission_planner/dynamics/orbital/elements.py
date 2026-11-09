@@ -77,10 +77,15 @@ def classical_elements_from_state(state, mu, e_tol=1e-8):
     raan = np.arctan2(node[1], node[0]) if node_mag > 0 else 0.0
 
     if e > e_tol:
-        cos_argp = np.clip(np.dot(node, e_vec) / (node_mag * e), -1.0, 1.0)
-        argp = np.arccos(cos_argp)
-        if e_vec[2] < 0:
-            argp = 2 * np.pi - argp
+        if node_mag > 0:
+            cos_argp = np.clip(np.dot(node, e_vec) / (node_mag * e), -1.0, 1.0)
+            argp = np.arccos(cos_argp)
+            if e_vec[2] < 0:
+                argp = 2 * np.pi - argp
+        else:
+            # equatorial orbit: no ascending node, so by the same convention
+            # as raan above, argp is measured directly from the x-axis
+            argp = np.arctan2(e_vec[1], e_vec[0])
 
         cos_nu = np.clip(np.dot(e_vec, r) / (e * r_mag), -1.0, 1.0)
         nu = np.arccos(cos_nu)

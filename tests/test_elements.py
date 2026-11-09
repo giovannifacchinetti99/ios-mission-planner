@@ -45,6 +45,19 @@ def test_round_trip_near_circular_orbit():
     assert np.isclose(recovered.mean_anomaly, elements.mean_anomaly, atol=1e-6)
 
 
+def test_round_trip_equatorial_eccentric_orbit():
+    # i=0: no ascending node, so argp falls back to the x-axis convention
+    elements = ClassicalElements(
+        a=R_EARTH + 500.0, e=0.05, i=0.0,
+        raan=0.0, argp=np.deg2rad(40.0), mean_anomaly=np.deg2rad(100.0),
+    )
+
+    state = cartesian_state_from_elements(elements, MU_EARTH)
+    recovered = classical_elements_from_state(state, MU_EARTH)
+
+    assert_elements_close(elements, recovered)
+
+
 def test_energy_and_angular_momentum_match_elements():
     elements = ClassicalElements(
         a=R_EARTH + 800.0, e=0.3, i=np.deg2rad(28.5),
