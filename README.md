@@ -40,6 +40,14 @@ To run the example notebooks from this environment's Jupyter kernel:
 python -m ipykernel install --user --name ios-mission-planner --display-name "Python (ios-mission-planner)"
 ```
 
+## Testing
+
+```bash
+pytest
+```
+
+The suite under `tests/` covers every module in `src/`: conservation laws and round-trips for the dynamics, margin and rocket-equation sanity checks for the budget, and sign-convention checks for the safety tools.
+
 ## Usage
 
 Relative motion (HCW), numerically integrated:
