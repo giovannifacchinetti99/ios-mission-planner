@@ -4,11 +4,18 @@ channels:
   - nodefaults
 dependencies:
   - python=3.13
+  # pinned to the openblas build: the mkl build of numpy's LAPACK backend
+  # crashes (illegal instruction) on np.linalg.solve/cholesky/svd on at
+  # least one development machine for this project
+  - libblas=*=*openblas
+  - libcblas=*=*openblas
+  - liblapack=*=*openblas
   - heyoka.py
   - numpy
   - matplotlib
   - jupyter
   - sgp4
+  - pytest
   - pip
   - pip:
       - -e .
