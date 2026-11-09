@@ -10,6 +10,9 @@ parts:
       - file: dynamics/eccentric_relative
         sections:
           - file: examples/eccentric_chief_relative_motion
+      - file: dynamics/drag
+        sections:
+          - file: examples/differential_drag
   - caption: Relative orbit elements & safety
     chapters:
       - file: dynamics/roe_j2

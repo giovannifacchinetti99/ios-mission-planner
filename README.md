@@ -28,6 +28,10 @@ A Python toolkit for **in-orbit servicing (IOS) mission analysis and planning**:
 
 *A relative orbit designed drift-free against a circular chief, in [`examples/eccentric_chief_relative_motion.ipynb`](examples/eccentric_chief_relative_motion.ipynb): the identical design flown against a mildly eccentric chief instead, with `eccentric_hill_equations_symbolic`, visibly fails to close over the same six orbits.*
 
+![Along-track separation growing from a ballistic coefficient difference alone](docs/images/differential_drag.png)
+
+*Two spacecraft started on the identical orbit, differing only in ballistic coefficient, in [`examples/differential_drag.ipynb`](examples/differential_drag.ipynb): the same kind of along-track drift as a low-thrust burn or a relative orbit elements mismatch, driven here by atmospheric drag alone, with no propellant spent.*
+
 ## Installation
 
 Requires [conda](https://conda.io) (e.g. [Miniforge](https://github.com/conda-forge/miniforge)). The dynamics modules depend on [heyoka.py](https://github.com/bluescarni/heyoka.py), which ships prebuilt binaries only through conda-forge (no Windows pip wheels), so this project is conda-first rather than pip/venv-based.
