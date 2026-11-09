@@ -20,6 +20,7 @@ parts:
       - file: budget
         sections:
           - file: examples/mission_budget
+          - file: examples/low_thrust_arc_optimization
   - caption: Real case study
     chapters:
       - file: case_study

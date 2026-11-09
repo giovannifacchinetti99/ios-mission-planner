@@ -153,10 +153,70 @@ a different strategy (concentrating thrust arcs near one point in the orbit,
 or stopping once enough eccentricity has built up) rather than just thrusting
 continuously for the equivalent delta-v.
 
+## Arc-limited thrust: closing the energy-vs-shape gap
+
+Code: {py:func}`low_thrust_arc_tangential_dynamics_symbolic
+<ios_mission_planner.dynamics.orbital.low_thrust.low_thrust_arc_tangential_dynamics_symbolic>`,
+{py:func}`deorbit_with_arc_limited_thrust
+<ios_mission_planner.dynamics.orbital.low_thrust_design.deorbit_with_arc_limited_thrust>`,
+{py:func}`solve_half_angle_for_target_perigee
+<ios_mission_planner.dynamics.orbital.low_thrust_design.solve_half_angle_for_target_perigee>`
+in `src/ios_mission_planner/dynamics/orbital/low_thrust.py` and
+`low_thrust_design.py`.
+
+The mismatch above has a fix that needs no new physics, only a different
+steering choice: thrust only while the spacecraft is within a chosen
+angular arc of one fixed point in the orbit, and coast the rest of the
+way. `low_thrust_arc_tangential_dynamics_symbolic` implements exactly this,
+reusing the same velocity-tracking steering as before but multiplying both
+the thrust acceleration and the mass flow by a smooth gate that turns on
+only within `half_angle` of a chosen inertial direction. The gate is a
+`tanh` rather than a hard switch, so the system stays an ordinary symbolic
+expression heyoka can integrate directly, with no discontinuity to detect.
+Two limits bound the behavior: a full-orbit arc, `half_angle` equal to
+$\pi$, is on for the whole orbit and reduces to the already-covered
+continuous case above, while narrowing the arc concentrates the same total
+delta-v into less and less of each orbit, building eccentricity the way a
+true impulsive burn does rather than just spreading energy evenly.
+
+Sweeping the arc width on the same deorbit scenario as above makes the
+point visually: the final semi-major axis barely moves, while the final
+perigee altitude slides steadily down from the continuous-thrust value
+toward the target as the arc narrows.
+
+![Sweeping the thrust arc width: energy barely moves, shape does](images/low_thrust_arc_sweep.png)
+
+`solve_half_angle_for_target_perigee` turns this into a design tool rather
+than a trial-and-error sweep: it bisects on `half_angle` directly against a
+target perigee radius, for a propellant budget fixed from an equivalent
+impulsive burn's delta-v, exactly as `deorbit_with_arc_limited_thrust`
+holds it fixed above. On the same scenario used throughout this chapter, it
+converges to an arc only a few degrees wide, centered on a single point of
+the original circular orbit, and reaches a final perigee within about a
+kilometre of the 200 km target, building the same eccentric "dip" shape an
+impulsive burn would have produced, entirely out of continuous low-thrust
+propulsion.
+
+![An arc-limited burn building an eccentric dip from a circular start](images/low_thrust_arc_trajectory.png)
+
+This is not a free lunch, and the two idealizations behind it are worth
+stating plainly rather than leaving implicit. The thrust arc is centered on
+a single fixed inertial direction chosen once, which works only because an
+unperturbed two-body orbit's apsidal line does not itself drift during the
+burn; a real implementation would still need onboard logic to recognize and
+hold that arc as the orbit evolves. And the wall-clock burn duration is
+estimated from a fixed duty cycle, `half_angle` divided by $\pi$, which
+assumes every orbit spends the same fraction of its time inside the arc;
+that holds well for the arc widths above, but degrades for arcs pushed far
+narrower, where many repeated passes through the same point measurably
+reshape the orbit between one pass and the next, long before the burn is
+over.
+
 ## See it in action
 
-The worked example for this chapter is {doc}`../examples/mission_budget`,
+The worked examples for this chapter are {doc}`../examples/mission_budget`,
 which assembles a full rendezvous-to-disposal mission as a margined
 delta-v budget, including a plane-change sensitivity case, and runs the
 impulsive-versus-continuous-thrust comparison above on the mission's
-deorbit burn.
+deorbit burn, and {doc}`../examples/low_thrust_arc_optimization`, which
+builds the arc-limited fix to that comparison from scratch.

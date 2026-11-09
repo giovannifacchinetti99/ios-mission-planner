@@ -19,6 +19,7 @@ NOTEBOOKS = [
     "j2_roe_state_transition.ipynb",
     "safety_fundamentals.ipynb",
     "mission_budget.ipynb",
+    "low_thrust_arc_optimization.ipynb",
     "cosmos2612_iceye_x36_rpo.ipynb",
 ]
 

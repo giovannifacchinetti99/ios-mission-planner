@@ -20,6 +20,10 @@ A Python toolkit for **in-orbit servicing (IOS) mission analysis and planning**:
 
 *The full mission, phasing through disposal, as a delta-v budget in [`examples/mission_budget.ipynb`](examples/mission_budget.ipynb): every phase margined by how mature its design is, converted to propellant mass through the rocket equation, and checked against a low-thrust alternative.*
 
+![An arc-limited low-thrust burn building an eccentric dip from a circular orbit](docs/images/low_thrust_arc_deorbit.png)
+
+*The deorbit burn from `mission_budget.ipynb`, re-flown with thrust confined to a narrow arc of each orbit instead of running continuously, in [`examples/low_thrust_arc_optimization.ipynb`](examples/low_thrust_arc_optimization.ipynb): the same propellant mass, now actually driving perigee down to the target altitude instead of just spreading the same delta-v evenly into a near-circular spiral.*
+
 ## Installation
 
 Requires [conda](https://conda.io) (e.g. [Miniforge](https://github.com/conda-forge/miniforge)). The dynamics modules depend on [heyoka.py](https://github.com/bluescarni/heyoka.py), which ships prebuilt binaries only through conda-forge (no Windows pip wheels), so this project is conda-first rather than pip/venv-based.
