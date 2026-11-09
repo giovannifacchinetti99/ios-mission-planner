@@ -16,6 +16,7 @@ EXAMPLES_DST = REPO_ROOT / "docs" / "book" / "examples"
 
 NOTEBOOKS = [
     "cw_fundamentals.ipynb",
+    "eccentric_chief_relative_motion.ipynb",
     "j2_roe_state_transition.ipynb",
     "safety_fundamentals.ipynb",
     "mission_budget.ipynb",

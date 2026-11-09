@@ -7,6 +7,9 @@ parts:
       - file: dynamics/relative
         sections:
           - file: examples/cw_fundamentals
+      - file: dynamics/eccentric_relative
+        sections:
+          - file: examples/eccentric_chief_relative_motion
   - caption: Relative orbit elements & safety
     chapters:
       - file: dynamics/roe_j2

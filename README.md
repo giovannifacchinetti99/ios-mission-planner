@@ -24,6 +24,10 @@ A Python toolkit for **in-orbit servicing (IOS) mission analysis and planning**:
 
 *The deorbit burn from `mission_budget.ipynb`, re-flown with thrust confined to a narrow arc of each orbit instead of running continuously, in [`examples/low_thrust_arc_optimization.ipynb`](examples/low_thrust_arc_optimization.ipynb): the same propellant mass, now actually driving perigee down to the target altitude instead of just spreading the same delta-v evenly into a near-circular spiral.*
 
+![The same drift-free relative orbit design, circular chief vs. eccentric chief](docs/images/eccentric_chief_drift.png)
+
+*A relative orbit designed drift-free against a circular chief, in [`examples/eccentric_chief_relative_motion.ipynb`](examples/eccentric_chief_relative_motion.ipynb): the identical design flown against a mildly eccentric chief instead, with `eccentric_hill_equations_symbolic`, visibly fails to close over the same six orbits.*
+
 ## Installation
 
 Requires [conda](https://conda.io) (e.g. [Miniforge](https://github.com/conda-forge/miniforge)). The dynamics modules depend on [heyoka.py](https://github.com/bluescarni/heyoka.py), which ships prebuilt binaries only through conda-forge (no Windows pip wheels), so this project is conda-first rather than pip/venv-based.
