@@ -44,6 +44,10 @@ A Python toolkit for **in-orbit servicing (IOS) mission analysis and planning**:
 
 *A rigid body attitude controller in [`examples/11_attitude_pointing_control/attitude_pointing_control.ipynb`](examples/11_attitude_pointing_control/attitude_pointing_control.ipynb): quaternion kinematics and Euler's rotational equations, validated by energy and angular momentum conservation, driven by a PD law that settles a 60 degree pointing error to a fraction of a degree.*
 
+![A recursive attitude filter staying bounded while gyro-only dead reckoning drifts](docs/images/attitude_filter_vs_dead_reckoning.png)
+
+*A multiplicative extended Kalman filter (MEKF) in [`examples/14_attitude_estimation_filter/attitude_estimation_filter.ipynb`](examples/14_attitude_estimation_filter/attitude_estimation_filter.ipynb): combining the rigid body dynamics with the vector-measurement attitude solutions above into one recursive estimator, which tracks attitude to a fraction of a degree and learns the gyro's own bias, while an uncorrected gyro-only integration drifts to tens of degrees over the same run.*
+
 ## Installation
 
 Requires [conda](https://conda.io) (e.g. [Miniforge](https://github.com/conda-forge/miniforge)). The dynamics modules depend on [heyoka.py](https://github.com/bluescarni/heyoka.py), which ships prebuilt binaries only through conda-forge (no Windows pip wheels), so this project is conda-first rather than pip/venv-based.
@@ -64,7 +68,7 @@ To run the example notebooks from this environment's Jupyter kernel:
 python -m ipykernel install --user --name ios-mission-planner --display-name "Python (ios-mission-planner)"
 ```
 
-The notebooks under `examples/` are numbered `01_...` through `13_...` by
+The notebooks under `examples/` are numbered `01_...` through `14_...` by
 how far along the project they build on: start from `01_cw_fundamentals`
 and work upward for the intended reading order, which also matches the
 [documentation book](https://giovannifacchinetti99.github.io/ios-mission-planner/)'s

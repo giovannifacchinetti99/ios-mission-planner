@@ -172,6 +172,69 @@ above.
 
 ![Estimation error shrinks with more measurement vectors and grows with sensor noise, exactly as a weighted least-squares estimator should](images/attitude_determination_error_scaling.png)
 
+## A recursive filter: closing the loop
+
+Code: {py:class}`MEKFState
+<ios_mission_planner.dynamics.attitude.filter.MEKFState>`,
+{py:func}`mekf_predict
+<ios_mission_planner.dynamics.attitude.filter.mekf_predict>`,
+{py:func}`mekf_update
+<ios_mission_planner.dynamics.attitude.filter.mekf_update>` in
+`src/ios_mission_planner/dynamics/attitude/filter.py`.
+Reference: Lefferts, Markley, Shuster, "Kalman Filtering for Spacecraft
+Attitude Estimation," *Journal of Guidance, Control, and Dynamics*, 5(5),
+1982; Markley, Crassidis, *Fundamentals of Spacecraft Attitude
+Determination and Control*.
+
+TRIAD and the SVD solution above both solve attitude from scratch, at a
+single instant, from whatever measurements are available right then. A
+gyro gives something those methods do not use at all: a continuous
+estimate of the rate itself, between measurements, carrying its own
+(generally unknown, slowly varying) bias. The multiplicative extended
+Kalman filter (MEKF) combines the two: it propagates attitude
+continuously from the gyro, using exactly the quaternion kinematics
+already derived above, and corrects both the attitude and the estimated
+gyro bias whenever a new vector measurement arrives.
+
+The "multiplicative" part is what keeps this well-posed. A quaternion
+carries a unit-norm constraint, so a plain additive covariance on all
+four components would be singular; the MEKF instead keeps a minimal,
+unconstrained three-parameter attitude *error* in its covariance,
+$\delta\vect\theta$, defined through $\vect q = \hat{\vect q}\otimes
+\delta\vect q(\delta\vect\theta)$, alongside a three-parameter gyro bias
+error, and only ever folds the corrected error back into the quaternion
+estimate itself (`mekf_update`'s reset step) rather than ever propagating
+or storing it directly. Between measurements, `mekf_predict` advances
+$\hat{\vect q}$ with the exact closed-form quaternion update for a
+constant rate over the step (the bias-corrected gyro reading), and
+advances the 6x6 error covariance with the standard linearized error
+dynamics,
+
+$$
+\delta\dot{\vect\theta} = -\hat{\vect\omega}\times\delta\vect\theta -
+\delta\vect b, \qquad \delta\dot{\vect b} = \vect\eta_b,
+$$
+
+the first term the same gyroscopic coupling Euler's equations already
+show, the second the gyro bias leaking directly into attitude error, and
+the third a random-walk model for how the bias itself might drift. At
+each measurement, `mekf_update` takes an attitude solution (from
+`triad_attitude` or `wahba_svd_attitude`, converted to a quaternion with
+`rotation_matrix_to_quaternion`), forms the small-angle error between it
+and the current estimate, and applies the ordinary Kalman gain and
+covariance update to correct both $\hat{\vect q}$ and the bias estimate
+together, since the two are coupled through exactly the process model
+above.
+
+![Left alone, gyro-only dead reckoning drifts as its bias accumulates error; the filter does not, and learns the bias itself along the way](images/attitude_filter_vs_dead_reckoning.png)
+
+Validated against a gyro with a constant, injected bias unknown to both
+estimators: an uncorrected "dead reckoning" propagation (gyro integration
+alone, exactly `mekf_predict` with no update ever applied) drifts to tens
+of degrees of error within minutes, while the filtered estimate stays
+within a fraction of a degree throughout, and the bias estimate itself
+visibly converges toward the true injected value on all three axes.
+
 ## What this chapter does not build
 
 This stays a self-contained rotational model. The attitude state here is
@@ -179,22 +242,23 @@ not coupled to the orbital or relative-motion state built everywhere else
 in this project: there is no model of how a pointing requirement
 constrains an approach trajectory, and no plume impingement or sensor
 field-of-view check tied to the actual relative geometry from the relative
-dynamics chapter. The determination methods above are also still a
-single-instant snapshot: each solves for the attitude from whatever
-measurements are available right now, with no memory of where the
-attitude was a moment ago and no use of the gyro-rate information the
-dynamics section already models. Coupling pointing requirements to the
-trajectories this project already designs, and combining this measurement
-model with the dynamics into a recursive filter that tracks attitude
-continuously, are substantial pieces of future work this chapter does not
-attempt.
+dynamics chapter. The vector measurements driving both the determination
+and the filter are also synthetic throughout, generated directly from a
+known true attitude plus injected noise, not from any model of a specific
+real sensor's actual error characteristics. Coupling pointing requirements
+to the trajectories this project already designs, and modeling real
+sensor hardware in enough detail to replace these synthetic measurements,
+are substantial pieces of future work this chapter does not attempt.
 
 ## See it in action
 
 The worked examples for this chapter are
 {doc}`../examples/11_attitude_pointing_control/attitude_pointing_control`,
 which runs the torque-free validation and the pointing control scenario
-above, and {doc}`../examples/13_attitude_determination/attitude_determination`,
+above; {doc}`../examples/13_attitude_determination/attitude_determination`,
 which validates TRIAD and the SVD solution to Wahba's problem against a
 known attitude and shows how the estimation error scales with the number
-of measurements and the sensor noise.
+of measurements and the sensor noise; and
+{doc}`../examples/14_attitude_estimation_filter/attitude_estimation_filter`,
+which runs the MEKF against dead reckoning on a simulated gyro with an
+unknown bias.
