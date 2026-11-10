@@ -212,6 +212,41 @@ narrower, where many repeated passes through the same point measurably
 reshape the orbit between one pass and the next, long before the burn is
 over.
 
+## A genuine trade-off, found with pygmo
+
+Code: {py:class}`ArcHalfAnglePygmoProblem
+<ios_mission_planner.dynamics.orbital.low_thrust_design.ArcHalfAnglePygmoProblem>`,
+{py:func}`pareto_front_arc_half_angle
+<ios_mission_planner.dynamics.orbital.low_thrust_design.pareto_front_arc_half_angle>`
+in `src/ios_mission_planner/dynamics/orbital/low_thrust_design.py`.
+
+Bisecting on the half-angle answers one question: which arc width gets
+closest to the target perigee. It is not the only question worth asking.
+A narrower arc gets closer to the target, but also takes proportionally
+longer in wall-clock time to spend the same propellant, and a real mission
+might reasonably prefer a faster, slightly less precise burn over a slower,
+nearly exact one. This is a genuine two-objective optimization, accuracy
+against burn duration, and `ArcHalfAnglePygmoProblem` exposes it to
+[pygmo](https://esa.github.io/pygmo2/), ESA's optimization library, as a
+user-defined problem (UDP) with two objectives, final perigee error and
+wall-clock duration, rather than collapsing it into the single bisection
+target used above.
+
+![A Pareto front: narrower arcs trade burn duration for perigee accuracy](images/low_thrust_pareto_front.png)
+
+`pareto_front_arc_half_angle` evolves this UDP with pygmo's NSGA-II
+algorithm, a population-based multi-objective evolutionary algorithm, and
+returns the final population's half-angles together with both objective
+values. Every point on the resulting curve is non-dominated: nothing else
+in the evolved population reaches both a shorter burn and a smaller
+perigee error at the same time, which is exactly what makes it a Pareto
+front rather than an ordinary scatter of results. The bisection solution
+from the previous section sits at the slow, accurate end of this same
+curve, since it was built to minimize perigee error alone with no regard
+for burn duration; NSGA-II instead hands back the whole family of
+reasonable compromises around it, the more useful answer whenever burn
+duration is itself a real mission constraint rather than an afterthought.
+
 ## See it in action
 
 The worked examples for this chapter are {doc}`../examples/08_mission_budget/mission_budget`,

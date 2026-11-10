@@ -44,7 +44,7 @@ conda env create -f environment.yml
 conda activate ios-mission-planner
 ```
 
-`environment.yml` installs Python, heyoka.py, numpy, matplotlib, Jupyter, and the package itself in editable mode (via `pip install -e .` under the hood), so changes to `src/` are picked up immediately without reinstalling.
+`environment.yml` installs Python, heyoka.py, numpy, matplotlib, Jupyter, [pygmo](https://esa.github.io/pygmo2/) (ESA's optimization library, used for the low-thrust arc-width trade-off), and the package itself in editable mode (via `pip install -e .` under the hood), so changes to `src/` are picked up immediately without reinstalling.
 
 To run the example notebooks from this environment's Jupyter kernel:
 

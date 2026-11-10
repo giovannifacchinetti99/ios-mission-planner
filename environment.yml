@@ -15,6 +15,7 @@ dependencies:
   - matplotlib
   - jupyter
   - sgp4
+  - pygmo
   - pytest
   - pip
   - pip:

@@ -1,4 +1,5 @@
 import numpy as np
+import pygmo as pg
 
 from ios_mission_planner.budget.propellant import G0, initial_mass
 from ios_mission_planner.dynamics.orbital.elements import classical_elements_from_state
@@ -134,3 +135,110 @@ def solve_half_angle_for_target_perigee(chief_state0, target_perigee_radius, del
             lo = mid
 
     return mid, f_mid
+
+
+class ArcHalfAnglePygmoProblem:
+    """
+    A pygmo user-defined problem (UDP) for the arc-limited deorbit burn:
+    pick the thrust-arc half-angle trading off how close the final perigee
+    lands to a target radius against how long, in wall-clock time, the burn
+    takes to fly.
+
+    `solve_half_angle_for_target_perigee` already finds a single half-angle
+    that hits the target, by bisection, but a mission designer rarely wants
+    only the closest possible match regardless of cost: a much narrower arc
+    gets measurably closer to the target perigee, but can take many times
+    longer in wall-clock time to spend the same propellant (see the
+    arc_duty_cycle discussion), and that trade is exactly what this UDP
+    exposes as two objectives to pygmo instead of collapsing it into one
+    bisection target.
+
+    Parameters
+    ----------
+    See deorbit_with_arc_limited_thrust for the shared parameters.
+    target_perigee_radius : float
+        Desired final perigee radius [km].
+    half_angle_bounds : tuple[float, float]
+        Search bounds for the half-angle [rad].
+
+    Author: Giovanni Facchinetti, 2026
+    """
+
+    def __init__(self, chief_state0, target_perigee_radius, delta_v_reference, m_dry, isp,
+                 thrust, mu, direction=(1.0, 0.0, 0.0), steepness=100.0,
+                 half_angle_bounds=(1e-3, np.pi)):
+        self.chief_state0 = chief_state0
+        self.target_perigee_radius = target_perigee_radius
+        self.delta_v_reference = delta_v_reference
+        self.m_dry = m_dry
+        self.isp = isp
+        self.thrust = thrust
+        self.mu = mu
+        self.direction = direction
+        self.steepness = steepness
+        self.half_angle_bounds = half_angle_bounds
+
+    def fitness(self, x):
+        half_angle = float(x[0])
+        # only the final state is needed, so a 2-point grid keeps each
+        # evaluation cheap enough for an evolutionary population to afford
+        elements, result = deorbit_with_arc_limited_thrust(
+            self.chief_state0, half_angle, self.delta_v_reference, self.m_dry, self.isp,
+            self.thrust, self.mu, direction=self.direction, steepness=self.steepness, n_pts=2,
+        )
+        perigee_error = abs(elements.a * (1.0 - elements.e) - self.target_perigee_radius)
+        wall_time = result.t[-1]
+
+        return [perigee_error, wall_time]
+
+    def get_nobj(self):
+        return 2
+
+    def get_bounds(self):
+        return ([self.half_angle_bounds[0]], [self.half_angle_bounds[1]])
+
+
+def pareto_front_arc_half_angle(chief_state0, target_perigee_radius, delta_v_reference, m_dry,
+                                 isp, thrust, mu, direction=(1.0, 0.0, 0.0), steepness=100.0,
+                                 generations=30, pop_size=24, seed=None):
+    """
+    Evolve a Pareto front of thrust-arc half-angles trading perigee
+    accuracy against burn duration, with pygmo's NSGA-II multi-objective
+    algorithm.
+
+    Parameters
+    ----------
+    See ArcHalfAnglePygmoProblem for the shared parameters.
+    generations : int
+        Number of NSGA-II generations to evolve.
+    pop_size : int
+        Population size.
+    seed : int, optional
+        Random seed, for reproducibility.
+
+    Returns
+    -------
+    half_angles : numpy.ndarray, shape (pop_size,)
+        Half-angles [rad] of the final, non-dominated-sorted population.
+    perigee_errors : numpy.ndarray, shape (pop_size,)
+        |final perigee - target| [km] for each half-angle.
+    wall_times : numpy.ndarray, shape (pop_size,)
+        Wall-clock burn duration [s] for each half-angle.
+
+    Author: Giovanni Facchinetti, 2026
+    """
+
+    udp = ArcHalfAnglePygmoProblem(
+        chief_state0, target_perigee_radius, delta_v_reference, m_dry, isp, thrust, mu,
+        direction=direction, steepness=steepness,
+    )
+    problem = pg.problem(udp)
+    algorithm = pg.algorithm(pg.nsga2(gen=generations))
+    population = pg.population(problem, size=pop_size, seed=seed)
+    population = algorithm.evolve(population)
+
+    half_angles = population.get_x()[:, 0]
+    perigee_errors = population.get_f()[:, 0]
+    wall_times = population.get_f()[:, 1]
+
+    return half_angles, perigee_errors, wall_times
