@@ -121,23 +121,80 @@ side" ($q_{e0}$ near $-1$) can settle the long way around instead, a known
 issue called unwinding that this chapter's controller does not correct
 for.
 
+## Attitude determination from vector measurements
+
+Code: {py:func}`quaternion_to_rotation_matrix
+<ios_mission_planner.dynamics.attitude.determination.quaternion_to_rotation_matrix>`,
+{py:func}`rotation_matrix_to_quaternion
+<ios_mission_planner.dynamics.attitude.determination.rotation_matrix_to_quaternion>`,
+{py:func}`triad_attitude
+<ios_mission_planner.dynamics.attitude.determination.triad_attitude>`,
+{py:func}`wahba_svd_attitude
+<ios_mission_planner.dynamics.attitude.determination.wahba_svd_attitude>`
+in `src/ios_mission_planner/dynamics/attitude/determination.py`.
+Reference: Wahba, "A Least Squares Estimate of Satellite Attitude," *SIAM
+Review*, 7(3), 1965; Markley, Crassidis, *Fundamentals of Spacecraft
+Attitude Determination and Control*.
+
+The dynamics and the controller above both assume the current attitude is
+simply known. A real spacecraft has to determine it first, from sensors
+that each measure a single direction, a sun sensor, a magnetometer, a star
+tracker, not the attitude itself. Given one such measurement in the body
+frame, $\vect b$, and the same direction as known in the reference frame,
+$\vect r$, a single vector pair is not enough to fix an orientation: it
+constrains two of the three rotational degrees of freedom, leaving a free
+rotation about $\vect b$ itself undetermined. A second, non-parallel
+vector pair fixes that remaining freedom, which is exactly what the
+classical **TRIAD** method uses: it builds an orthonormal triad from
+$(\vect b_1,\vect b_2)$ the same way from $(\vect r_1,\vect r_2)$, and
+returns the rotation that maps one triad onto the other, trusting the
+first vector of each pair exactly and using the second only to fix the
+plane.
+
+With more than two measurements available, discarding all but two throws
+away real information. The more general question, finding the rotation
+$R$ minimizing the weighted sum of squared errors
+$\sum_i w_i\,|\vect b_i - R\vect r_i|^2$ over any number of vector pairs,
+is Wahba's problem (1965), and it is also exactly the problem the famous
+QUEST algorithm was built to solve. `wahba_svd_attitude` solves the same
+problem by a different, numerically simpler route: forming the attitude
+profile matrix $B=\sum_i w_i\,\vect b_i\vect r_i^{\mathsf T}$ and taking
+its singular value decomposition $B=U\Sigma V^{\mathsf T}$, the optimal
+rotation is $R = U\,\mathrm{diag}(1,1,\det U\det V)\,V^{\mathsf T}$, with
+no need for QUEST's quaternion eigenvalue iteration, a shortcut that
+mattered when a full eigendecomposition was too expensive to compute
+on board, not a real consideration today. `rotation_matrix_to_quaternion`
+converts the result (by Shepperd's method, picking whichever of four
+equivalent formulas stays best-conditioned for the given rotation) into
+the same quaternion convention `rigid_body.py` already uses, so an
+estimated attitude from here feeds directly into the pointing controller
+above.
+
+![Estimation error shrinks with more measurement vectors and grows with sensor noise, exactly as a weighted least-squares estimator should](images/attitude_determination_error_scaling.png)
+
 ## What this chapter does not build
 
 This stays a self-contained rotational model. The attitude state here is
 not coupled to the orbital or relative-motion state built everywhere else
 in this project: there is no model of how a pointing requirement
-constrains an approach trajectory, no plume impingement or sensor
+constrains an approach trajectory, and no plume impingement or sensor
 field-of-view check tied to the actual relative geometry from the relative
-dynamics chapter, and no estimator behind any of it, the controller above
-assumes the attitude and rate are known exactly rather than measured
-through a real sensor and filter. Coupling pointing requirements to the
-trajectories this project already designs, and closing the loop with an
-actual navigation filter, are substantial pieces of future work this
-chapter does not attempt.
+dynamics chapter. The determination methods above are also still a
+single-instant snapshot: each solves for the attitude from whatever
+measurements are available right now, with no memory of where the
+attitude was a moment ago and no use of the gyro-rate information the
+dynamics section already models. Coupling pointing requirements to the
+trajectories this project already designs, and combining this measurement
+model with the dynamics into a recursive filter that tracks attitude
+continuously, are substantial pieces of future work this chapter does not
+attempt.
 
 ## See it in action
 
-The worked example for this chapter is
+The worked examples for this chapter are
 {doc}`../examples/11_attitude_pointing_control/attitude_pointing_control`,
 which runs the torque-free validation and the pointing control scenario
-above.
+above, and {doc}`../examples/13_attitude_determination/attitude_determination`,
+which validates TRIAD and the SVD solution to Wahba's problem against a
+known attitude and shows how the estimation error scales with the number
+of measurements and the sensor noise.

@@ -36,6 +36,10 @@ A Python toolkit for **in-orbit servicing (IOS) mission analysis and planning**:
 
 *An automated feasibility verdict from a YAML mission scenario, in [`examples/12_mission_feasibility_report/mission_feasibility_report.ipynb`](examples/12_mission_feasibility_report/mission_feasibility_report.ipynb): every deterministic safety and budget check passes, but the Monte Carlo collision probability does not, the same risk `examples/05_rendezvous_safety_assessment.ipynb` found by hand, now caught automatically.*
 
+![Attitude estimation error shrinking with more measurement vectors and growing with sensor noise](docs/images/attitude_determination_error_scaling.png)
+
+*TRIAD and a singular-value-decomposition solution to Wahba's problem, in [`examples/13_attitude_determination/attitude_determination.ipynb`](examples/13_attitude_determination/attitude_determination.ipynb): exact recovery of a known attitude with no noise, and the expected least-squares scaling once sensor noise is added.*
+
 ![A PD attitude controller settling a 60-degree pointing error](docs/images/attitude_pd_pointing.png)
 
 *A rigid body attitude controller in [`examples/11_attitude_pointing_control/attitude_pointing_control.ipynb`](examples/11_attitude_pointing_control/attitude_pointing_control.ipynb): quaternion kinematics and Euler's rotational equations, validated by energy and angular momentum conservation, driven by a PD law that settles a 60 degree pointing error to a fraction of a degree.*
@@ -60,7 +64,7 @@ To run the example notebooks from this environment's Jupyter kernel:
 python -m ipykernel install --user --name ios-mission-planner --display-name "Python (ios-mission-planner)"
 ```
 
-The notebooks under `examples/` are numbered `01_...` through `12_...` by
+The notebooks under `examples/` are numbered `01_...` through `13_...` by
 how far along the project they build on: start from `01_cw_fundamentals`
 and work upward for the intended reading order, which also matches the
 [documentation book](https://giovannifacchinetti99.github.io/ios-mission-planner/)'s

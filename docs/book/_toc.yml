@@ -37,6 +37,7 @@ parts:
       - file: attitude
         sections:
           - file: examples/11_attitude_pointing_control/attitude_pointing_control
+          - file: examples/13_attitude_determination/attitude_determination
   - caption: Real case study
     chapters:
       - file: case_study

@@ -31,6 +31,7 @@ FILES = [
     "12_mission_feasibility_report/mission_feasibility_report.ipynb",
     "12_mission_feasibility_report/baseline_scenario.yaml",
     "12_mission_feasibility_report/improved_nav_scenario.yaml",
+    "13_attitude_determination/attitude_determination.ipynb",
 ]
 
 
