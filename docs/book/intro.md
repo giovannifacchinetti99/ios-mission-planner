@@ -33,6 +33,16 @@ The fourth and final layer is mission-level analysis, stringing maneuvers
 together into a full mission timeline and budget, validated against real
 tracked objects.
 
+The book has grown past that original four-layer outline since, in ways
+that extend rather than replace it: an eccentric-chief generalization of
+the relative dynamics, atmospheric and differential drag, an arc-limited
+low-thrust optimization built with [pygmo](https://esa.github.io/pygmo2/),
+and a standalone rotational dynamics chapter covering attitude and
+pointing control. The last of these, notably, is not coupled to the
+translational layers above it; it is included as its own chapter because
+it is real, validated theory, not because the rest of the project yet uses
+it for anything.
+
 ## How to read this book
 
 Each chapter develops the theory with the same notation and conventions used

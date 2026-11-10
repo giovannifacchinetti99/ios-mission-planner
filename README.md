@@ -32,6 +32,10 @@ A Python toolkit for **in-orbit servicing (IOS) mission analysis and planning**:
 
 *Two spacecraft started on the identical orbit, differing only in ballistic coefficient, in [`examples/07_differential_drag/differential_drag.ipynb`](examples/07_differential_drag/differential_drag.ipynb): the same kind of along-track drift as a low-thrust burn or a relative orbit elements mismatch, driven here by atmospheric drag alone, with no propellant spent.*
 
+![A PD attitude controller settling a 60-degree pointing error](docs/images/attitude_pd_pointing.png)
+
+*A rigid body attitude controller in [`examples/11_attitude_pointing_control/attitude_pointing_control.ipynb`](examples/11_attitude_pointing_control/attitude_pointing_control.ipynb): quaternion kinematics and Euler's rotational equations, validated by energy and angular momentum conservation, driven by a PD law that settles a 60 degree pointing error to a fraction of a degree.*
+
 ## Installation
 
 Requires [conda](https://conda.io) (e.g. [Miniforge](https://github.com/conda-forge/miniforge)). The dynamics modules depend on [heyoka.py](https://github.com/bluescarni/heyoka.py), which ships prebuilt binaries only through conda-forge (no Windows pip wheels), so this project is conda-first rather than pip/venv-based.
@@ -52,7 +56,7 @@ To run the example notebooks from this environment's Jupyter kernel:
 python -m ipykernel install --user --name ios-mission-planner --display-name "Python (ios-mission-planner)"
 ```
 
-The notebooks under `examples/` are numbered `01_...` through `10_...` by
+The notebooks under `examples/` are numbered `01_...` through `11_...` by
 how far along the project they build on: start from `01_cw_fundamentals`
 and work upward for the intended reading order, which also matches the
 [documentation book](https://giovannifacchinetti99.github.io/ios-mission-planner/)'s

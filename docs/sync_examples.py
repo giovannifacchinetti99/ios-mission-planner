@@ -27,6 +27,7 @@ FILES = [
     "10_cosmos2612_iceye_x36_rpo/cosmos2612_iceye_x36_rpo.ipynb",
     "10_cosmos2612_iceye_x36_rpo/spacetrack_68762.tle",
     "10_cosmos2612_iceye_x36_rpo/spacetrack_59103.tle",
+    "11_attitude_pointing_control/attitude_pointing_control.ipynb",
 ]
 
 

@@ -27,6 +27,11 @@ parts:
         sections:
           - file: examples/08_mission_budget/mission_budget
           - file: examples/09_low_thrust_arc_optimization/low_thrust_arc_optimization
+  - caption: Attitude
+    chapters:
+      - file: attitude
+        sections:
+          - file: examples/11_attitude_pointing_control/attitude_pointing_control
   - caption: Real case study
     chapters:
       - file: case_study
