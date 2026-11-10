@@ -99,7 +99,7 @@ is a genuine control-design problem this project leaves open.
 ## See it in action
 
 The worked example for this chapter is
-{doc}`../examples/differential_drag`, which validates the single-orbit
+{doc}`../examples/07_differential_drag/differential_drag`, which validates the single-orbit
 decay, builds the along-track drift between two ballistic coefficients
 from scratch, and sweeps how the drift rate scales with the mismatch
 between them.

@@ -94,7 +94,7 @@ of view, is thinner than it looks.
 ## See it in action
 
 The worked example for this chapter is
-{doc}`../examples/cosmos2612_iceye_x36_rpo`, which carries out every step
+{doc}`../examples/10_cosmos2612_iceye_x36_rpo/cosmos2612_iceye_x36_rpo`, which carries out every step
 above in full, including the source links for the public reporting and the
 exact Space-Track query used to fetch the element histories saved alongside
 the notebook.

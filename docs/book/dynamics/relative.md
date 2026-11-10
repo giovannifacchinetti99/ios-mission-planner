@@ -197,6 +197,6 @@ safety-ellipse machinery used elsewhere in the project.
 ## See it in action
 
 The worked example for this chapter is
-{doc}`../examples/cw_fundamentals`, which builds the LVLH frame, propagates
+{doc}`../examples/01_cw_fundamentals/cw_fundamentals`, which builds the LVLH frame, propagates
 the HCW equations, decomposes the result into relative orbit elements, and
 designs a drift-free relative orbit from scratch.

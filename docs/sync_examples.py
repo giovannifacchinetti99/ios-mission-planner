@@ -4,7 +4,9 @@ docs/book/examples/, so Jupyter Book can embed them without the book's
 source root reaching outside docs/book/.
 
 Run before every `jupyter-book build docs/book`. The destination folder is
-gitignored; this script is the only thing that populates it.
+gitignored; this script is the only thing that populates it. Source paths
+are relative to examples/, numbered by code progression, matching the
+numbered folders under examples/ itself.
 """
 
 import shutil
@@ -14,28 +16,26 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 EXAMPLES_SRC = REPO_ROOT / "examples"
 EXAMPLES_DST = REPO_ROOT / "docs" / "book" / "examples"
 
-NOTEBOOKS = [
-    "cw_fundamentals.ipynb",
-    "eccentric_chief_relative_motion.ipynb",
-    "differential_drag.ipynb",
-    "j2_roe_state_transition.ipynb",
-    "safety_fundamentals.ipynb",
-    "mission_budget.ipynb",
-    "low_thrust_arc_optimization.ipynb",
-    "cosmos2612_iceye_x36_rpo.ipynb",
-]
-
-EXTRA_FILES = [
-    "spacetrack_68762.tle",
-    "spacetrack_59103.tle",
+FILES = [
+    "01_cw_fundamentals/cw_fundamentals.ipynb",
+    "02_eccentric_chief_relative_motion/eccentric_chief_relative_motion.ipynb",
+    "06_j2_roe_state_transition/j2_roe_state_transition.ipynb",
+    "04_safety_fundamentals/safety_fundamentals.ipynb",
+    "07_differential_drag/differential_drag.ipynb",
+    "08_mission_budget/mission_budget.ipynb",
+    "09_low_thrust_arc_optimization/low_thrust_arc_optimization.ipynb",
+    "10_cosmos2612_iceye_x36_rpo/cosmos2612_iceye_x36_rpo.ipynb",
+    "10_cosmos2612_iceye_x36_rpo/spacetrack_68762.tle",
+    "10_cosmos2612_iceye_x36_rpo/spacetrack_59103.tle",
 ]
 
 
 def main():
-    EXAMPLES_DST.mkdir(parents=True, exist_ok=True)
-    for name in NOTEBOOKS + EXTRA_FILES:
-        shutil.copy2(EXAMPLES_SRC / name, EXAMPLES_DST / name)
-        print(f"synced {name}")
+    for relpath in FILES:
+        dst = EXAMPLES_DST / relpath
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(EXAMPLES_SRC / relpath, dst)
+        print(f"synced {relpath}")
 
 
 if __name__ == "__main__":

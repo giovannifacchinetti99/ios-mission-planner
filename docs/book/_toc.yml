@@ -6,29 +6,29 @@ parts:
       - file: dynamics/absolute
       - file: dynamics/relative
         sections:
-          - file: examples/cw_fundamentals
+          - file: examples/01_cw_fundamentals/cw_fundamentals
       - file: dynamics/eccentric_relative
         sections:
-          - file: examples/eccentric_chief_relative_motion
+          - file: examples/02_eccentric_chief_relative_motion/eccentric_chief_relative_motion
       - file: dynamics/drag
         sections:
-          - file: examples/differential_drag
+          - file: examples/07_differential_drag/differential_drag
   - caption: Relative orbit elements & safety
     chapters:
       - file: dynamics/roe_j2
         sections:
-          - file: examples/j2_roe_state_transition
+          - file: examples/06_j2_roe_state_transition/j2_roe_state_transition
       - file: safety
         sections:
-          - file: examples/safety_fundamentals
+          - file: examples/04_safety_fundamentals/safety_fundamentals
   - caption: Mission budget
     chapters:
       - file: budget
         sections:
-          - file: examples/mission_budget
-          - file: examples/low_thrust_arc_optimization
+          - file: examples/08_mission_budget/mission_budget
+          - file: examples/09_low_thrust_arc_optimization/low_thrust_arc_optimization
   - caption: Real case study
     chapters:
       - file: case_study
         sections:
-          - file: examples/cosmos2612_iceye_x36_rpo
+          - file: examples/10_cosmos2612_iceye_x36_rpo/cosmos2612_iceye_x36_rpo

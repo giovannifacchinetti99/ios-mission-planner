@@ -209,5 +209,6 @@ an earlier one was removed from the repository during the migration to
 `heyoka`, and has not been rebuilt since. In practice, this chapter's
 functions are exercised indirectly, as the chief's absolute trajectory
 underneath a relative-motion or mission-budget notebook, for example in
-`examples/rendezvous_to_safety_ellipse.ipynb`, `examples/mission_budget.ipynb`,
-and `examples/rendezvous_safety_assessment.ipynb`.
+`examples/03_rendezvous_to_safety_ellipse/rendezvous_to_safety_ellipse.ipynb`,
+`examples/08_mission_budget/mission_budget.ipynb`, and
+`examples/05_rendezvous_safety_assessment/rendezvous_safety_assessment.ipynb`.

@@ -107,10 +107,10 @@ other.
 
 ## See it in action
 
-The worked example for this chapter is {doc}`../examples/safety_fundamentals`,
+The worked example for this chapter is {doc}`../examples/04_safety_fundamentals/safety_fundamentals`,
 which walks through keep-out zones, passive safety, and approach corridors
 on the same pair of two-impulse hops, then adds a fourth part on how J2
 erodes a nominally drift-free safety ellipse over many orbits and what a
 once-per-orbit station-keeping correction costs to counter it. The Monte
 Carlo collision probability check is exercised separately, as part of a
-full mission's safety assessment, in `examples/rendezvous_safety_assessment.ipynb`.
+full mission's safety assessment, in `examples/05_rendezvous_safety_assessment/rendezvous_safety_assessment.ipynb`.

@@ -6,31 +6,31 @@ A Python toolkit for **in-orbit servicing (IOS) mission analysis and planning**:
 
 ![Natural motion circumnavigation: CW analytical vs. numerical](docs/images/cw_natural_motion_circumnavigation.png)
 
-*A drift-free, out-of-plane relative orbit (natural motion circumnavigation) around the chief, from [`examples/cw_fundamentals.ipynb`](examples/cw_fundamentals.ipynb): the closed-form Clohessy-Wiltshire solution and the numerical integration of the Hill equations agree down to numerical noise.*
+*A drift-free, out-of-plane relative orbit (natural motion circumnavigation) around the chief, from [`examples/01_cw_fundamentals/cw_fundamentals.ipynb`](examples/01_cw_fundamentals/cw_fundamentals.ipynb): the closed-form Clohessy-Wiltshire solution and the numerical integration of the Hill equations agree down to numerical noise.*
 
 ![The far-range approach and the resulting safety ellipse](docs/images/rendezvous_safety_ellipse.png)
 
-*The far-range approach from a 5 km hold point onto a 2:1 safety ellipse, from [`examples/rendezvous_to_safety_ellipse.ipynb`](examples/rendezvous_to_safety_ellipse.ipynb): flown with nonlinear two-body dynamics, closing within a few metres of the design.*
+*The far-range approach from a 5 km hold point onto a 2:1 safety ellipse, from [`examples/03_rendezvous_to_safety_ellipse/rendezvous_to_safety_ellipse.ipynb`](examples/03_rendezvous_to_safety_ellipse/rendezvous_to_safety_ellipse.ipynb): flown with nonlinear two-body dynamics, closing within a few metres of the design.*
 
 ![Safety-checking the whole mission against a keep-out zone](docs/images/mission_safety_check.png)
 
-*Range to the chief over the whole rendezvous mission, checked against a keep-out zone in [`examples/rendezvous_safety_assessment.ipynb`](examples/rendezvous_safety_assessment.ipynb): deterministic margin, passive safety, approach corridor, J2 station-keeping and a Monte Carlo collision probability all run on the same flown trajectory.*
+*Range to the chief over the whole rendezvous mission, checked against a keep-out zone in [`examples/05_rendezvous_safety_assessment/rendezvous_safety_assessment.ipynb`](examples/05_rendezvous_safety_assessment/rendezvous_safety_assessment.ipynb): deterministic margin, passive safety, approach corridor, J2 station-keeping and a Monte Carlo collision probability all run on the same flown trajectory.*
 
 ![Delta-v budget by mission phase](docs/images/mission_budget.png)
 
-*The full mission, phasing through disposal, as a delta-v budget in [`examples/mission_budget.ipynb`](examples/mission_budget.ipynb): every phase margined by how mature its design is, converted to propellant mass through the rocket equation, and checked against a low-thrust alternative.*
+*The full mission, phasing through disposal, as a delta-v budget in [`examples/08_mission_budget/mission_budget.ipynb`](examples/08_mission_budget/mission_budget.ipynb): every phase margined by how mature its design is, converted to propellant mass through the rocket equation, and checked against a low-thrust alternative.*
 
 ![An arc-limited low-thrust burn building an eccentric dip from a circular orbit](docs/images/low_thrust_arc_deorbit.png)
 
-*The deorbit burn from `mission_budget.ipynb`, re-flown with thrust confined to a narrow arc of each orbit instead of running continuously, in [`examples/low_thrust_arc_optimization.ipynb`](examples/low_thrust_arc_optimization.ipynb): the same propellant mass, now actually driving perigee down to the target altitude instead of just spreading the same delta-v evenly into a near-circular spiral.*
+*The deorbit burn from `mission_budget.ipynb`, re-flown with thrust confined to a narrow arc of each orbit instead of running continuously, in [`examples/09_low_thrust_arc_optimization/low_thrust_arc_optimization.ipynb`](examples/09_low_thrust_arc_optimization/low_thrust_arc_optimization.ipynb): the same propellant mass, now actually driving perigee down to the target altitude instead of just spreading the same delta-v evenly into a near-circular spiral.*
 
 ![The same drift-free relative orbit design, circular chief vs. eccentric chief](docs/images/eccentric_chief_drift.png)
 
-*A relative orbit designed drift-free against a circular chief, in [`examples/eccentric_chief_relative_motion.ipynb`](examples/eccentric_chief_relative_motion.ipynb): the identical design flown against a mildly eccentric chief instead, with `eccentric_hill_equations_symbolic`, visibly fails to close over the same six orbits.*
+*A relative orbit designed drift-free against a circular chief, in [`examples/02_eccentric_chief_relative_motion/eccentric_chief_relative_motion.ipynb`](examples/02_eccentric_chief_relative_motion/eccentric_chief_relative_motion.ipynb): the identical design flown against a mildly eccentric chief instead, with `eccentric_hill_equations_symbolic`, visibly fails to close over the same six orbits.*
 
 ![Along-track separation growing from a ballistic coefficient difference alone](docs/images/differential_drag.png)
 
-*Two spacecraft started on the identical orbit, differing only in ballistic coefficient, in [`examples/differential_drag.ipynb`](examples/differential_drag.ipynb): the same kind of along-track drift as a low-thrust burn or a relative orbit elements mismatch, driven here by atmospheric drag alone, with no propellant spent.*
+*Two spacecraft started on the identical orbit, differing only in ballistic coefficient, in [`examples/07_differential_drag/differential_drag.ipynb`](examples/07_differential_drag/differential_drag.ipynb): the same kind of along-track drift as a low-thrust burn or a relative orbit elements mismatch, driven here by atmospheric drag alone, with no propellant spent.*
 
 ## Installation
 
@@ -51,6 +51,12 @@ To run the example notebooks from this environment's Jupyter kernel:
 ```bash
 python -m ipykernel install --user --name ios-mission-planner --display-name "Python (ios-mission-planner)"
 ```
+
+The notebooks under `examples/` are numbered `01_...` through `10_...` by
+how far along the project they build on: start from `01_cw_fundamentals`
+and work upward for the intended reading order, which also matches the
+[documentation book](https://giovannifacchinetti99.github.io/ios-mission-planner/)'s
+own structure.
 
 ## Testing
 

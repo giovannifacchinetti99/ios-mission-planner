@@ -214,9 +214,9 @@ over.
 
 ## See it in action
 
-The worked examples for this chapter are {doc}`../examples/mission_budget`,
+The worked examples for this chapter are {doc}`../examples/08_mission_budget/mission_budget`,
 which assembles a full rendezvous-to-disposal mission as a margined
 delta-v budget, including a plane-change sensitivity case, and runs the
 impulsive-versus-continuous-thrust comparison above on the mission's
-deorbit burn, and {doc}`../examples/low_thrust_arc_optimization`, which
+deorbit burn, and {doc}`../examples/09_low_thrust_arc_optimization/low_thrust_arc_optimization`, which
 builds the arc-limited fix to that comparison from scratch.

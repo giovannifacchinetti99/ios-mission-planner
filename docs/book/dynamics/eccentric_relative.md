@@ -94,6 +94,6 @@ before trusting a design to stay put.
 ## See it in action
 
 The worked example for this chapter is
-{doc}`../examples/eccentric_chief_relative_motion`, which runs the
+{doc}`../examples/02_eccentric_chief_relative_motion/eccentric_chief_relative_motion`, which runs the
 circular-chief reduction check, the nonlinear-truth validation, and the
 drift-free design comparison above.

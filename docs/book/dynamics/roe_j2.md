@@ -125,7 +125,7 @@ needing to numerically integrate chief and deputy separately and subtract.
 ## See it in action
 
 The worked example for this chapter is
-{doc}`../examples/j2_roe_state_transition`, which designs a deputy orbit
+{doc}`../examples/06_j2_roe_state_transition/j2_roe_state_transition`, which designs a deputy orbit
 from a target set of ROE, propagates it against the closed-form STM, and
 compares that analytical prediction against brute-force nonlinear
 propagation of both chief and deputy under full two-body-plus-J2 dynamics.

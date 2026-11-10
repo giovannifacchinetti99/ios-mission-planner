@@ -10,7 +10,7 @@ not re-executed).
 python -m venv docs/.venv
 docs/.venv/Scripts/pip install -r docs/requirements.txt   # docs/.venv/bin/pip on macOS/Linux
 
-docs/.venv/Scripts/python docs/sync_examples.py           # copies examples/*.ipynb into docs/book/examples/
+docs/.venv/Scripts/python docs/sync_examples.py           # copies the listed notebooks into docs/book/examples/
 docs/.venv/Scripts/jupyter-book build docs/book
 
 # open docs/book/_build/html/index.html
