@@ -114,9 +114,22 @@ $$
 M = E - e \sin E,
 $$
 
-which has no closed-form inverse: `cartesian_state_from_elements` solves it
-for $E$ given $M$ by Newton's method (see
-`_eccentric_from_mean_anomaly`), then gets $\nu$ from $E$ via
+which has no closed-form inverse, since $E$ appears both linearly and
+inside a sine. `cartesian_state_from_elements` solves it for $E$ given $M$
+by Newton's method instead (see `_eccentric_from_mean_anomaly`): starting
+from a guess $E_0$ (the function uses $M$ itself for a low eccentricity,
+or $\pi$ for a high one, where $M$ is a poor starting guess), it repeatedly
+corrects
+
+$$
+E_{k+1} = E_k - \frac{E_k - e\sin E_k - M}{1 - e\cos E_k},
+$$
+
+the root of Kepler's equation divided by its own derivative, until the
+correction is smaller than a tolerance. This converges quadratically once
+close to the root, doubling the number of correct digits each iteration,
+which is why only a handful of iterations are ever needed in practice. With
+$E$ in hand, $\nu$ follows via
 
 $$
 \tan\frac{\nu}{2} = \sqrt{\frac{1+e}{1-e}}\,\tan\frac{E}{2}.
@@ -200,6 +213,34 @@ a thrust level) are passed in as `heyoka.par[...]` placeholders rather than
 baked into the expression at construction time: the same compiled system can
 then be re-run many times with different parameter values without
 re-compiling.
+
+It is worth knowing what "a high-order Taylor series integrator" actually
+means, since every notebook in this project ultimately rests on it. Given
+$\dot{\vect x}=\vect f(\vect x,t)$, a Taylor method advances one step $h$
+by expanding the solution itself in a Taylor series,
+
+$$
+\vect x(t+h) = \vect x(t) + h\,\dot{\vect x}(t) +
+\frac{h^2}{2!}\,\ddot{\vect x}(t) + \cdots +
+\frac{h^p}{p!}\,\vect x^{(p)}(t) + O(h^{p+1}),
+$$
+
+truncated at some order $p$. The usual obstacle to this is that computing
+$\ddot{\vect x}$, $\vect x^{(p)}$ by hand, differentiating $\vect f$ over
+and over, gets unmanageable fast for anything beyond a toy problem.
+Because $\vect f$ here is a symbolic expression graph rather than an
+opaque Python function, `heyoka` sidesteps that obstacle entirely: it
+differentiates the graph automatically, to whatever order the integrator
+needs, and compiles the result with LLVM into machine code specific to
+that one system. The order $p$ and step $h$ are then chosen adaptively at
+runtime to hit a target error tolerance at every step, which is normally a
+double-digit order for a smooth problem like orbital motion, far beyond
+what a fixed low-order method such as Runge-Kutta would use, and is
+exactly why these integrations stay accurate over many orbits without
+needing an impractically fine step.
+Reference: Biscani, Izzo, "Revisiting high-order Taylor methods for
+astrodynamics and celestial mechanics," *Monthly Notices of the Royal
+Astronomical Society*, 504(2), 2021.
 
 ## See it in action
 
