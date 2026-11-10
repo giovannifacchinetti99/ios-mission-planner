@@ -39,6 +39,7 @@ parts:
           - file: examples/11_attitude_pointing_control/attitude_pointing_control
           - file: examples/13_attitude_determination/attitude_determination
           - file: examples/14_attitude_estimation_filter/attitude_estimation_filter
+          - file: examples/15_attitude_coupled_pointing/attitude_coupled_pointing
   - caption: Real case study
     chapters:
       - file: case_study

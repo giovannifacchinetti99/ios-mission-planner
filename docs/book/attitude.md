@@ -235,20 +235,77 @@ of degrees of error within minutes, while the filtered estimate stays
 within a fraction of a degree throughout, and the bias estimate itself
 visibly converges toward the true injected value on all three axes.
 
+## Coupling to a real relative trajectory
+
+Code: {py:func}`target_quaternion_toward_chief
+<ios_mission_planner.dynamics.attitude.target_pointing.target_quaternion_toward_chief>`,
+{py:func}`fly_with_periodic_retargeting
+<ios_mission_planner.dynamics.attitude.target_pointing.fly_with_periodic_retargeting>`,
+{py:func}`boresight_pointing_error_deg
+<ios_mission_planner.dynamics.attitude.target_pointing.boresight_pointing_error_deg>`
+in `src/ios_mission_planner/dynamics/attitude/target_pointing.py`.
+
+Everything above points at a fixed target, chosen once. A real approach
+needs a body axis pointed at the chief continuously, as the relative
+geometry itself evolves along whatever trajectory the relative dynamics
+chapter designs. Fixing where a body axis should point is the same
+two-vector problem `triad_attitude` already solves for attitude
+*determination*, read in the opposite direction: pointing a primary body
+axis along $-\hat{\vect\rho}$ (toward the chief) and a secondary axis
+along a fixed reference (the LVLH cross-track direction, by default) is
+exactly the TRIAD construction, with the body axes playing the role the
+measured directions played before. `target_quaternion_toward_chief` reuses
+it unchanged for this purpose, treating the chief's LVLH frame as if it
+were the inertial frame the rest of this chapter's dynamics use, a stated
+simplification: LVLH does rotate, at the orbital rate, far slower than any
+attitude control bandwidth in this chapter, and folding that rotation into
+a true inertial composition would add bookkeeping this module keeps out.
+
+`fly_with_periodic_retargeting` flies the relative motion (the linear Hill
+equations from the relative dynamics chapter) and the attitude together,
+recomputing the target from the deputy's actual position only every
+`retarget_interval` seconds and holding it fixed in between, a periodic
+guidance update rather than a continuously recomputed closed form, chosen
+specifically to avoid embedding Shepperd's method's branching logic inside
+a single symbolic ODE system.
+
+![A real far-range hop, flown with the attitude tracking the chief: pointing error grows between retargets and resets at each update, more sharply as the deputy closes in](images/attitude_coupled_hop_pointing.png)
+
+Flown on the same far-range hop built in the relative dynamics chapter,
+the pointing error traces a sawtooth, growing between retargets and
+resetting at each update, with a telling detail: the sawtooth grows
+noticeably larger in the final few minutes, as the deputy closes in on the
+chief. The direction to a nearby object sweeps through a wider angle per
+unit time than a distant one does, for the same reason a nearby lamppost
+seems to swing past faster than a distant one while walking, so a fixed
+retargeting cadence falls further behind exactly during the closing phase
+of an approach, when it matters most.
+
+![Shorter retargeting intervals track the chief more tightly, with no interval that is simultaneously free and perfect](images/attitude_retarget_interval_sweep.png)
+
+`boresight_pointing_error_deg` is the piece worth distinguishing from the
+safety chapter's approach corridor specifically: the corridor checks
+whether the trajectory's *geometry* stays within an allowed cone, with no
+reference to attitude at all, while this checks whether a sensor would
+actually have the chief in view given the attitude the controller really
+achieves, a genuinely different question that only this coupled model can
+answer.
+
 ## What this chapter does not build
 
-This stays a self-contained rotational model. The attitude state here is
-not coupled to the orbital or relative-motion state built everywhere else
-in this project: there is no model of how a pointing requirement
-constrains an approach trajectory, and no plume impingement or sensor
-field-of-view check tied to the actual relative geometry from the relative
-dynamics chapter. The vector measurements driving both the determination
-and the filter are also synthetic throughout, generated directly from a
-known true attitude plus injected noise, not from any model of a specific
-real sensor's actual error characteristics. Coupling pointing requirements
-to the trajectories this project already designs, and modeling real
-sensor hardware in enough detail to replace these synthetic measurements,
-are substantial pieces of future work this chapter does not attempt.
+This coupling stays deliberately bounded. The relative dynamics used here
+are still the linearized, circular-chief Hill equations, not the
+eccentric-chief or J2-aware models built elsewhere in this project, and
+nothing feeds a pointing requirement back into how a trajectory itself is
+designed, only checks how well a fixed trajectory's attitude requirement
+is met after the fact. There is also still no plume impingement model, and
+the vector measurements driving both the determination and the filter
+sections are synthetic throughout, generated directly from a known true
+attitude plus injected noise, not from any model of a specific real
+sensor's actual error characteristics. Feeding pointing requirements back
+into trajectory design, and modeling real sensor hardware in enough detail
+to replace these synthetic measurements, remain future work this chapter
+does not attempt.
 
 ## See it in action
 
@@ -261,4 +318,8 @@ known attitude and shows how the estimation error scales with the number
 of measurements and the sensor noise; and
 {doc}`../examples/14_attitude_estimation_filter/attitude_estimation_filter`,
 which runs the MEKF against dead reckoning on a simulated gyro with an
-unknown bias.
+unknown bias; and
+{doc}`../examples/15_attitude_coupled_pointing/attitude_coupled_pointing`,
+which flies the attitude and relative dynamics together on a real
+far-range hop and sweeps how the retargeting cadence affects pointing
+error.

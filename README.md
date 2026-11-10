@@ -48,6 +48,10 @@ A Python toolkit for **in-orbit servicing (IOS) mission analysis and planning**:
 
 *A multiplicative extended Kalman filter (MEKF) in [`examples/14_attitude_estimation_filter/attitude_estimation_filter.ipynb`](examples/14_attitude_estimation_filter/attitude_estimation_filter.ipynb): combining the rigid body dynamics with the vector-measurement attitude solutions above into one recursive estimator, which tracks attitude to a fraction of a degree and learns the gyro's own bias, while an uncorrected gyro-only integration drifts to tens of degrees over the same run.*
 
+![Attitude coupled to a real far-range hop, tracking the chief with periodic retargeting](docs/images/attitude_coupled_hop_pointing.png)
+
+*Attitude tied to actual relative motion for the first time, in [`examples/15_attitude_coupled_pointing/attitude_coupled_pointing.ipynb`](examples/15_attitude_coupled_pointing/attitude_coupled_pointing.ipynb): a body axis tracks the chief through the same far-range hop flown elsewhere in this project, re-pointing periodically rather than chasing one fixed target, with the pointing error growing fastest right as the deputy closes in.*
+
 ## Installation
 
 Requires [conda](https://conda.io) (e.g. [Miniforge](https://github.com/conda-forge/miniforge)). The dynamics modules depend on [heyoka.py](https://github.com/bluescarni/heyoka.py), which ships prebuilt binaries only through conda-forge (no Windows pip wheels), so this project is conda-first rather than pip/venv-based.
@@ -68,7 +72,7 @@ To run the example notebooks from this environment's Jupyter kernel:
 python -m ipykernel install --user --name ios-mission-planner --display-name "Python (ios-mission-planner)"
 ```
 
-The notebooks under `examples/` are numbered `01_...` through `14_...` by
+The notebooks under `examples/` are numbered `01_...` through `15_...` by
 how far along the project they build on: start from `01_cw_fundamentals`
 and work upward for the intended reading order, which also matches the
 [documentation book](https://giovannifacchinetti99.github.io/ios-mission-planner/)'s

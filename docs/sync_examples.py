@@ -33,6 +33,7 @@ FILES = [
     "12_mission_feasibility_report/improved_nav_scenario.yaml",
     "13_attitude_determination/attitude_determination.ipynb",
     "14_attitude_estimation_filter/attitude_estimation_filter.ipynb",
+    "15_attitude_coupled_pointing/attitude_coupled_pointing.ipynb",
 ]
 
 
