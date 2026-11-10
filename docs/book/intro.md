@@ -29,9 +29,10 @@ relative trajectory into actual burns, whether impulsive two-impulse
 targeting or continuous low-thrust steering, with the resulting propellant
 cost budgeted through the rocket equation.
 
-The fourth and final layer is mission-level analysis, stringing maneuvers
-together into a full mission timeline and budget, validated against real
-tracked objects.
+The fourth and final layer is mission-level feasibility: taking a mission
+scenario end to end through dynamics, safety, and budget automatically,
+and turning the result into a single verdict and a shareable report,
+rather than a notebook wired together by hand for each new mission.
 
 The book has grown past that original four-layer outline since, in ways
 that extend rather than replace it: an eccentric-chief generalization of

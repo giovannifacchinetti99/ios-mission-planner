@@ -28,6 +28,9 @@ FILES = [
     "10_cosmos2612_iceye_x36_rpo/spacetrack_68762.tle",
     "10_cosmos2612_iceye_x36_rpo/spacetrack_59103.tle",
     "11_attitude_pointing_control/attitude_pointing_control.ipynb",
+    "12_mission_feasibility_report/mission_feasibility_report.ipynb",
+    "12_mission_feasibility_report/baseline_scenario.yaml",
+    "12_mission_feasibility_report/improved_nav_scenario.yaml",
 ]
 
 

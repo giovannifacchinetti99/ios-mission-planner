@@ -1,0 +1,52 @@
+name: "Baseline LEO servicing rendezvous (improved relative navigation)"
+
+chief:
+  altitude_km: 500.0
+  inclination_deg: 51.6
+
+deputy:
+  parking_altitude_km: 400.0
+  dry_mass_kg: 150.0
+  propulsion:
+    isp_s: 1800.0
+
+phasing:
+  hold_range_km: 5.0
+
+safety_ellipse:
+  radius_m: 200.0
+  hop_duration_orbits: 0.75
+
+station_keeping:
+  rate_m_s_per_orbit: 0.4369
+  dwell_days: 2.0
+
+docking:
+  duration_orbits: 0.1
+  closing_speed_m_s: 0.02
+
+disposal:
+  target_perigee_altitude_km: 200.0
+
+safety_checks:
+  keep_out_zone_m: [20.0, 20.0, 20.0]
+  approach_corridor_half_angle_deg: 45.0
+  approach_corridor_direction: [0.0, -1.0, 0.0]
+  passive_safety_duration_s: 1800.0
+  monte_carlo:
+    # 3 m instead of the baseline's 10 m: a relative-navigation sensor
+    # (e.g. a vision-based or lidar relative nav system) precise enough
+    # to meaningfully change the Monte Carlo verdict below, not just a
+    # number picked to force a pass
+    nav_sigma_m: 3.0
+    burn_sigma_m_s: 0.01
+    n_samples: 20000
+
+margins:
+  system_reserve: 0.10
+
+plane_change_deg: 0.0
+
+verdict_thresholds:
+  max_collision_probability: 0.01
+  max_wet_mass_kg: 160.0

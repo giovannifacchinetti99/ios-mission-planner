@@ -27,6 +27,11 @@ parts:
         sections:
           - file: examples/08_mission_budget/mission_budget
           - file: examples/09_low_thrust_arc_optimization/low_thrust_arc_optimization
+  - caption: Mission feasibility
+    chapters:
+      - file: feasibility
+        sections:
+          - file: examples/12_mission_feasibility_report/mission_feasibility_report
   - caption: Attitude
     chapters:
       - file: attitude

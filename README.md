@@ -32,6 +32,10 @@ A Python toolkit for **in-orbit servicing (IOS) mission analysis and planning**:
 
 *Two spacecraft started on the identical orbit, differing only in ballistic coefficient, in [`examples/07_differential_drag/differential_drag.ipynb`](examples/07_differential_drag/differential_drag.ipynb): the same kind of along-track drift as a low-thrust burn or a relative orbit elements mismatch, driven here by atmospheric drag alone, with no propellant spent.*
 
+![A feasibility report's delta-v budget, flagged NOT FEASIBLE on collision probability alone](docs/images/feasibility_budget_preview.png)
+
+*An automated feasibility verdict from a YAML mission scenario, in [`examples/12_mission_feasibility_report/mission_feasibility_report.ipynb`](examples/12_mission_feasibility_report/mission_feasibility_report.ipynb): every deterministic safety and budget check passes, but the Monte Carlo collision probability does not, the same risk `examples/05_rendezvous_safety_assessment.ipynb` found by hand, now caught automatically.*
+
 ![A PD attitude controller settling a 60-degree pointing error](docs/images/attitude_pd_pointing.png)
 
 *A rigid body attitude controller in [`examples/11_attitude_pointing_control/attitude_pointing_control.ipynb`](examples/11_attitude_pointing_control/attitude_pointing_control.ipynb): quaternion kinematics and Euler's rotational equations, validated by energy and angular momentum conservation, driven by a PD law that settles a 60 degree pointing error to a fraction of a degree.*
@@ -48,7 +52,7 @@ conda env create -f environment.yml
 conda activate ios-mission-planner
 ```
 
-`environment.yml` installs Python, heyoka.py, numpy, matplotlib, Jupyter, [pygmo](https://esa.github.io/pygmo2/) (ESA's optimization library, used for the low-thrust arc-width trade-off), and the package itself in editable mode (via `pip install -e .` under the hood), so changes to `src/` are picked up immediately without reinstalling.
+`environment.yml` installs Python, heyoka.py, numpy, matplotlib, Jupyter, [pygmo](https://esa.github.io/pygmo2/) (ESA's optimization library, used for the low-thrust arc-width trade-off), PyYAML, Jinja2 and [WeasyPrint](https://weasyprint.org/) (used to generate the mission feasibility reports), and the package itself in editable mode (via `pip install -e .` under the hood), so changes to `src/` are picked up immediately without reinstalling.
 
 To run the example notebooks from this environment's Jupyter kernel:
 
@@ -56,7 +60,7 @@ To run the example notebooks from this environment's Jupyter kernel:
 python -m ipykernel install --user --name ios-mission-planner --display-name "Python (ios-mission-planner)"
 ```
 
-The notebooks under `examples/` are numbered `01_...` through `11_...` by
+The notebooks under `examples/` are numbered `01_...` through `12_...` by
 how far along the project they build on: start from `01_cw_fundamentals`
 and work upward for the intended reading order, which also matches the
 [documentation book](https://giovannifacchinetti99.github.io/ios-mission-planner/)'s
@@ -141,4 +145,20 @@ lines = [
 dv_total = total_delta_v(lines, system_margin=0.10)  # + a 10% mission reserve
 
 propellant_kg = initial_mass(dv_total, isp=220.0, m_dry=150.0) - 150.0
+```
+
+A full mission feasibility report, from a declarative YAML scenario (dynamics, safety, and budget run automatically):
+
+```python
+from ios_mission_planner.report.scenario import load_scenario
+from ios_mission_planner.report.pipeline import run_feasibility_analysis
+from ios_mission_planner.report.render import render_html, render_pdf
+
+scenario = load_scenario("my_mission.yaml")
+result = run_feasibility_analysis(scenario)
+
+print(result.verdict)  # "FEASIBLE" / "FEASIBLE WITH CAVEATS" / "NOT FEASIBLE"
+
+html = render_html(result)
+render_pdf(html, "report.pdf")
 ```
