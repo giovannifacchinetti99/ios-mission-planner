@@ -16,6 +16,9 @@ dependencies:
   - jupyter
   - sgp4
   - pygmo
+  - pyyaml
+  - jinja2
+  - weasyprint
   - pytest
   - pip
   - pip:
