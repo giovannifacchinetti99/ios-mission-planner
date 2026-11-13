@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Mission analysis report: {{ analysis.name }}</title>
+<style>
+  body { font-family: -apple-system, Segoe UI, Helvetica, Arial, sans-serif; color: #1a1a1a;
+         max-width: 960px; margin: 2rem auto; padding: 0 1rem; line-height: 1.5; }
+  h1 { font-size: 1.6rem; margin-bottom: 0.2rem; }
+  h2 { font-size: 1.15rem; margin-top: 2.2rem; border-bottom: 1px solid #ddd; padding-bottom: 0.3rem; }
+  .subtitle { color: #666; margin-top: 0; }
+  .verdict { display: inline-block; padding: 0.6rem 1.2rem; border-radius: 6px; color: white;
+             font-weight: bold; font-size: 1.1rem; background: {{ verdict_color }}; }
+  table { border-collapse: collapse; width: 100%; margin: 0.8rem 0; }
+  th, td { text-align: left; padding: 0.35rem 0.6rem; border-bottom: 1px solid #eee; font-size: 0.92rem; }
+  th { color: #444; font-weight: 600; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .pass { color: #1e7e34; font-weight: 600; }
+  .fail { color: #b22222; font-weight: 600; }
+  .findings li { margin-bottom: 0.4rem; }
+  img { max-width: 100%; }
+  .meta { color: #666; font-size: 0.85rem; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 0 2rem; }
+  @media print { h2 { page-break-after: avoid; } img, table { page-break-inside: avoid; } }
+</style>
+</head>
+<body>
+
+<h1>Mission analysis report: {{ analysis.name }}</h1>
+<p class="subtitle">ios-mission-planner, closed-loop simulation of the approach and docking · epoch {{ epoch }}</p>
+
+<p><span class="verdict">{{ analysis.verdict }}</span></p>
+
+{% if analysis.issues %}
+<p><b>Why the mission is not feasible as analyzed:</b></p>
+<ul class="findings">
+  {% for issue in analysis.issues %}<li>{{ issue }}</li>{% endfor %}
+</ul>
+{% endif %}
+{% if analysis.caveats %}
+<p><b>To be known:</b></p>
+<ul class="findings">
+  {% for caveat in analysis.caveats %}<li>{{ caveat }}</li>{% endfor %}
+</ul>
+{% endif %}
+{% if not analysis.issues and not analysis.caveats %}
+<p>Nothing was flagged against the requirements.</p>
+{% endif %}
+
+<h2>Requirements</h2>
+<table>
+  <tr><th>Probability of a docking inside the contact limits, demonstrated at {{ "%.0f"|format(analysis.requirements.confidence * 100) }} % confidence</th>
+      <td class="num">at least {{ "%.3f"|format(analysis.requirements.min_success_probability) }}</td></tr>
+  <tr><th>Velocity change of the approach, {{ "%.0f"|format(analysis.requirements.delta_v_percentile) }}th percentile</th>
+      <td class="num">at most {{ "%.2f"|format(analysis.requirements.max_delta_v) }} m/s</td></tr>
+  <tr><th>Final approach in favourable lighting</th>
+      <td class="num">{{ "required" if analysis.requirements.require_lighting else "not required" }}</td></tr>
+</table>
+
+<h2>Scenario</h2>
+<div class="two">
+<table>
+  <tr><th>Chief altitude</th><td class="num">{{ "%.0f"|format(config.chief.altitude_km) }} km</td></tr>
+  <tr><th>Chief inclination</th><td class="num">{{ "%.1f"|format(config.chief.inclination_deg) }} deg</td></tr>
+  <tr><th>Deputy mass</th><td class="num">{{ "%.0f"|format(config.deputy.mass) }} kg</td></tr>
+  <tr><th>Thrust per axis</th><td class="num">{{ "%.1f"|format(config.deputy.thrusters.max_force) }} N</td></tr>
+  <tr><th>Minimum impulse bit</th><td class="num">{{ "%.3f"|format(config.deputy.thrusters.min_impulse_bit) }} N s</td></tr>
+  <tr><th>Specific impulse</th><td class="num">{{ "%.0f"|format(config.deputy.thrusters.isp) }} s</td></tr>
+</table>
+<table>
+  <tr><th>Hold points, port to port</th><td class="num">{{ config.guidance.hold_distances|map("int")|join(", ") }} m</td></tr>
+  <tr><th>Approach corridor half-angle</th><td class="num">{{ "%.0f"|format(config.guidance.corridor_half_angle_deg) }} deg</td></tr>
+  <tr><th>Docking speed</th><td class="num">{{ "%.3f"|format(config.guidance.docking_speed) }} m/s</td></tr>
+  <tr><th>Wheel torque and momentum</th><td class="num">{{ config.deputy.wheels.max_torque }} N m, {{ config.deputy.wheels.max_momentum }} N m s</td></tr>
+  <tr><th>Relative sensor field of view</th><td class="num">{{ "%.0f"|format(config.deputy.sensors.relative_fov_half_angle_deg) }} deg half-angle</td></tr>
+  <tr><th>Relative sensor errors</th><td class="num">{{ "%.1f"|format(config.deputy.sensors.relative_range_noise_fraction * 100) }} % of range, {{ "%.2f"|format(config.deputy.sensors.relative_angle_noise_std * 1000) }} mrad</td></tr>
+</table>
+</div>
+
+<h2>Nominal run</h2>
+<p>Outcome: <span class="{{ 'pass' if nominal.outcome == 'docked' else 'fail' }}">{{ nominal.outcome }}</span>
+   after {{ "%.1f"|format(nominal.duration / 60) }} min, {{ "%.2f"|format(nominal.total_delta_v) }} m/s,
+   {{ "%.0f"|format(nominal.propellant_used * 1000) }} g of propellant{% if nominal.abort_reason %} ({{ nominal.abort_reason }}){% endif %}.</p>
+<img src="data:image/png;base64,{{ trajectory_figure }}" alt="Approach trajectory">
+<img src="data:image/png;base64,{{ timeline_figure }}" alt="Range, closing speed and navigation error">
+
+<table>
+  <tr><th>Phase</th><th class="num">Start [min]</th><th class="num">Duration [min]</th><th class="num">Delta-v [m/s]</th></tr>
+  {% for row in timeline %}
+  <tr><td>{{ row.label }}</td><td class="num">{{ "%.1f"|format(row.start) }}</td>
+      <td class="num">{{ "%.1f"|format(row.duration) }}</td><td class="num">{{ "%.3f"|format(row.delta_v) }}</td></tr>
+  {% endfor %}
+  <tr><th>Total</th><th></th><th class="num">{{ "%.1f"|format(nominal.duration / 60) }}</th>
+      <th class="num">{{ "%.3f"|format(nominal.total_delta_v) }}</th></tr>
+</table>
+
+{% if contact %}
+<h2>Conditions at contact, nominal run</h2>
+<table>
+  <tr><th>Condition</th><th class="num">Value</th><th>Limit</th><th>Result</th></tr>
+  {% for row in contact %}
+  <tr><td>{{ row.name }}</td><td class="num">{{ "%.4f"|format(row.value) }}</td><td>{{ row.limit }}</td>
+      <td class="{{ 'pass' if row.passed else 'fail' }}">{{ 'PASS' if row.passed else 'FAIL' }}</td></tr>
+  {% endfor %}
+</table>
+{% endif %}
+
+{% if campaign %}
+<h2>Monte Carlo campaign</h2>
+<p>{{ campaign.n_runs }} runs with dispersed initial conditions, thrusters, sensor mounting and chief attitude.
+   Probability of success {{ "%.3f"|format(campaign.rate) }}, with a
+   {{ "%.0f"|format(analysis.requirements.confidence * 100) }} % interval from {{ "%.3f"|format(campaign.lower) }}
+   to {{ "%.3f"|format(campaign.upper) }}.</p>
+<table>
+  <tr><th>Outcome</th><th class="num">Runs</th></tr>
+  {% for outcome, count in campaign.outcomes.items() %}
+  <tr><td>{{ outcome }}</td><td class="num">{{ count }}</td></tr>
+  {% endfor %}
+</table>
+<img src="data:image/png;base64,{{ campaign.figure }}" alt="Contact conditions and velocity change over the campaign">
+<table>
+  <tr><th>Condition at contact</th><th class="num">Mean</th><th class="num">Std</th><th class="num">99th pct</th>
+      <th class="num">Min</th><th class="num">Max</th><th>Limit</th></tr>
+  {% for row in campaign.statistics %}
+  <tr><td>{{ row.name }}</td><td class="num">{{ "%.4f"|format(row.mean) }}</td><td class="num">{{ "%.4f"|format(row.std) }}</td>
+      <td class="num">{{ "%.4f"|format(row.p99) }}</td><td class="num">{{ "%.4f"|format(row.min) }}</td>
+      <td class="num">{{ "%.4f"|format(row.max) }}</td><td>{{ row.limit }}</td></tr>
+  {% endfor %}
+</table>
+<table>
+  <tr><th>Velocity change, mean</th><td class="num">{{ "%.3f"|format(campaign.dv_mean) }} m/s</td></tr>
+  <tr><th>Velocity change, standard deviation</th><td class="num">{{ "%.3f"|format(campaign.dv_std) }} m/s</td></tr>
+  <tr><th>Velocity change, {{ "%.0f"|format(analysis.requirements.delta_v_percentile) }}th percentile</th><td class="num">{{ "%.3f"|format(campaign.dv_percentile) }} m/s</td></tr>
+  <tr><th>Velocity change, worst run</th><td class="num">{{ "%.3f"|format(campaign.dv_max) }} m/s</td></tr>
+  <tr><th>Propellant, worst run</th><td class="num">{{ "%.0f"|format(campaign.propellant_max * 1000) }} g</td></tr>
+</table>
+{% endif %}
+
+{% if lighting %}
+<h2>Lighting of the docking port</h2>
+<p>Beta angle {{ "%.1f"|format(lighting.beta) }} deg. The chief is in eclipse for
+   {{ "%.0f"|format(lighting.eclipse_fraction * 100) }} % of the time, and the port is in favourable lighting for
+   {{ "%.0f"|format(lighting.favourable_fraction * 100) }} %.
+   {% if analysis.final_approach_lit is not none %}
+   The final approach of the nominal run is
+   <span class="{{ 'pass' if analysis.final_approach_lit else 'fail' }}">{{ 'inside' if analysis.final_approach_lit else 'outside' }}</span>
+   a favourable window.{% endif %}</p>
+<img src="data:image/png;base64,{{ lighting.figure }}" alt="Lighting of the docking port">
+{% if lighting.windows %}
+<table>
+  <tr><th>Favourable window</th><th class="num">Opens [min]</th><th class="num">Closes [min]</th><th class="num">Duration [min]</th></tr>
+  {% for window in lighting.windows %}
+  <tr><td>{{ loop.index }}</td><td class="num">{{ "%.1f"|format(window.start) }}</td>
+      <td class="num">{{ "%.1f"|format(window.end) }}</td><td class="num">{{ "%.1f"|format(window.duration) }}</td></tr>
+  {% endfor %}
+</table>
+{% endif %}
+{% endif %}
+
+<p class="meta">Generated by ios-mission-planner. The numbers come from a closed-loop simulation in which a
+nonlinear truth model of both spacecraft is flown by the on-board chain of navigation, guidance and control,
+with the sensor and actuator models of the scenario. The assumptions behind them are listed in the page on
+limitations of the project's book: a cooperative chief that holds its attitude, perfect knowledge of the orbit
+of the chief, rigid bodies, no plume impingement.</p>
+
+</body>
+</html>

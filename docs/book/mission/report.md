@@ -69,6 +69,43 @@ figures, and the verdict with its reasons. The figures are embedded in the
 file, so the report is a single file that can be sent as it is. The same
 document can be converted to PDF.
 
+## From the screening to the full analysis
+
+The screening is fast because it avoids everything that takes time: it does
+not fly the approach, it does not simulate sensors or controllers, and it
+judges safety with a linear propagation. A mission that passes it deserves
+the complete analysis, and the report of that analysis is built in the same
+spirit, from three inputs produced by the chapters before this one: a
+closed-loop simulation with nominal hardware, from {doc}`../gnc/simulator`;
+a Monte Carlo campaign, from {doc}`monte_carlo`; and the lighting of the
+docking port, from {doc}`illumination`.
+
+The requirements are again explicit. The campaign must demonstrate a
+required probability of docking inside the contact limits, which means that
+the lower end of the confidence interval of the success rate, and not the
+rate itself, must reach the requirement. The velocity change at a high
+percentile of the campaign must be within what is available. And the final
+approach must be flown in favourable lighting.
+
+The verdict follows the same three levels. The mission is not feasible if
+the nominal run does not dock, if the observed probability of success is
+below the requirement, or if the propellant does not suffice. It is
+feasible with caveats when it passes those but something must be known: a
+campaign too small to demonstrate the required probability, some runs that
+ended in an abort, a contact condition that uses a large part of its limit,
+a final approach flown in the dark. The distinction between the first and
+the second case of the probability matters. A campaign of 60 runs without
+a failure does not show that the probability is below the requirement, and
+it does not show that it is above 0.95 either: the honest statement is that
+more runs are needed, and the report says so.
+
+The document contains the verdict with its reasons, the scenario, the
+timeline of the nominal run with the velocity change of each phase, the
+conditions at contact, the statistics of the campaign, and the lighting
+windows with the position of the final approach among them. The report of
+the reference mission, as produced by the notebook of this chapter, is
+<a href="../examples/19_mission_analysis_report/docking_mission_report.html">here</a>.
+
 ## In the code
 
 The pipeline is in the `report` package. `MissionScenario` in
@@ -81,12 +118,21 @@ warnings. `render_html` in `report/render.py` fills the template, and
 `render_pdf` converts the document to PDF with
 [WeasyPrint](https://weasyprint.org/).
 
+The full analysis is in `report/mission_report.py`. `MissionRequirements`
+holds the requirements, `analyze_mission` takes a `SimulationResult`, a
+`MonteCarloResult` and a `LightingTimeline` and returns a `MissionAnalysis`
+with the verdict, the issues and the caveats, and `render_mission_report`
+produces the document, which `render_pdf` converts as well.
+
 ## In the notebook
 
 {doc}`../examples/19_mission_analysis_report/mission_analysis_report` runs
 the baseline scenario of the reference mission through the screening, shows
 why it is judged not feasible, and then runs the scenario with improved
 navigation, which passes. It generates the HTML and PDF documents for both.
+It then runs the full analysis of the approach and docking, with a
+closed-loop simulation, a Monte Carlo campaign and the lighting of the
+port, and generates the mission analysis report.
 
 ## References
 
