@@ -1,56 +1,91 @@
 # IOS Mission Planner
 
-This book is the theoretical companion to the `ios-mission-planner` code. It is
-not a replacement for the function docstrings, which stay the place to look up
-what a specific call does, what it expects, and in which units. This book
-exists for the layer underneath that: where the formulas come from, why they
-take the form they do, and how they connect to each other across the project.
-Each chapter ends with a worked example notebook, which is the place to see
-the theory applied to an actual case rather than just stated.
+`ios-mission-planner` is a Python toolkit for the analysis of in-orbit
+servicing missions, in which a servicer spacecraft approaches a target
+spacecraft, flies around it, and finally docks with it. This book is the
+theoretical companion to the code. The docstrings remain the place to look up
+what a specific function expects and returns; the book explains where the
+formulas come from, why they take the form they do, and how one piece leads
+to the next.
 
-## What the project does
+## The mission this book follows
 
-`ios-mission-planner` analyzes in-orbit servicing (IOS) missions, in which a
-servicer spacecraft (the "deputy") approaches, inspects, or berths with a
-target spacecraft (the "chief"). The analysis is organized in four layers,
-each building on the one before it.
+Every chapter serves one reference mission. A target, called the **chief**
+throughout, flies on a low Earth orbit at 500 km altitude and 51.6 degrees of
+inclination. A servicer, called the **deputy**, is released on a lower
+parking orbit, thousands of kilometres behind. The deputy has to catch up
+with the chief, transfer to its orbit, close the remaining distance through a
+sequence of hold points, and translate along a narrow corridor until its
+docking port touches the port of the chief with a small, controlled contact
+velocity. Along the way it must never be on a trajectory that would hit the
+chief if a burn failed, it must keep its sensors pointed at the target, and
+it must do all of this with a propellant budget that closes.
 
-The first layer is dynamics: how the chief and deputy move, both in an
-absolute sense as they orbit the Earth, and relative to each other, meaning
-the deputy's motion as seen from the chief. This is the subject of this
-book's first two chapters.
+Answering "can this mission be flown, and how well" requires a chain of
+models, and the book is ordered along that chain, from the simplest model to
+the complete simulation.
 
-The second layer builds relative orbit elements and safety analysis on top of
-that dynamics: a compact, geometric way to describe and design relative
-orbits such as passively safe ellipses, hold points, and approach corridors.
+## Road map
 
-The third layer is maneuver design and propagation, turning a desired
-relative trajectory into actual burns, whether impulsive two-impulse
-targeting or continuous low-thrust steering, with the resulting propellant
-cost budgeted through the rocket equation.
+Part I, *Orbital foundations*, describes the motion of a single spacecraft
+around the Earth: the two-body problem, the orbital elements, and the two
+perturbations that matter most in low Earth orbit, the oblateness of the
+Earth and atmospheric drag.
 
-The fourth and final layer is mission-level feasibility: taking a mission
-scenario end to end through dynamics, safety, and budget automatically,
-and turning the result into a single verdict and a shareable report,
-rather than a notebook wired together by hand for each new mission.
+Part II, *Relative motion*, puts a second spacecraft on a nearby orbit and
+describes how it moves as seen from the first. It starts from the linear
+model for a circular chief, which gives the geometric vocabulary of every
+rendezvous, and then removes its assumptions one at a time: an eccentric
+chief, then perturbations.
 
-The book has grown past that original four-layer outline since, in ways
-that extend rather than replace it: an eccentric-chief generalization of
-the relative dynamics, atmospheric and differential drag, an arc-limited
-low-thrust optimization built with [pygmo](https://esa.github.io/pygmo2/),
-and a standalone rotational dynamics chapter covering attitude and
-pointing control. The last of these, notably, is not coupled to the
-translational layers above it; it is included as its own chapter because
-it is real, validated theory, not because the rest of the project yet uses
-it for anything.
+Part III, *Maneuvers and propulsion*, turns a desired trajectory into burns.
+It covers the classical impulsive maneuvers, the two-impulse targeting that
+moves the deputy between two relative states, and what changes when the
+thrust is low and continuous.
 
-## How to read this book
+Part IV, *Safety*, asks whether a planned approach is acceptable, including
+when something goes wrong: keep-out zones, passive safety, approach
+corridors, and the probability of collision under navigation and execution
+errors.
 
-Each chapter develops the theory with the same notation and conventions used
-in the code, cites the textbook or paper each result comes from, and links
-directly to the source file and function that implements it. The worked
-example notebook at the end of a chapter is the same notebook you can open and
-re-run yourself under `examples/` in the repository; it is embedded here
-read-only, with its already-computed outputs, so that this book does not need
-the project's full numerical environment (heyoka, in particular, is a
-conda-only dependency) to be built.
+Part V, *Attitude*, adds the rotational motion that the previous parts
+ignored: how a rigid body turns, how its orientation is controlled, how it is
+estimated from sensors, and how it is tied to the relative geometry of the
+approach.
+
+Each chapter depends only on the chapters before it, and each begins by
+saying what it takes from them.
+
+## How a chapter is organized
+
+Every chapter has the same three movements. It first develops the theory,
+with the notation used in the code. It then describes, in a section called
+*In the code*, which functions implement that theory and how they are meant
+to be used. It closes with a section called *In the notebook*, which says
+what the companion notebook does with those functions: every notebook
+validates the model of its chapter against an independent reference, and the
+plots and numbers live there, not in the chapter. The notebooks are the same
+files found under `examples/` in the repository, numbered in the reading
+order of this book, and they are embedded here with their computed outputs.
+
+The assumptions and simplifications of the whole project are collected in a
+single page, {doc}`limitations`, instead of being scattered across the
+chapters.
+
+## Conventions
+
+Inertial positions and velocities are expressed in kilometres and kilometres
+per second, in an Earth-centered inertial frame. Relative positions and
+velocities are expressed in metres and metres per second, in the
+local-vertical local-horizontal (LVLH) frame of the chief, whose $x$ axis is
+radial (pointing away from the Earth), whose $z$ axis is along the orbit
+normal, and whose $y$ axis completes the triad and points along the velocity
+for a circular orbit. The $y$ axis is also called the V-bar and the $x$ axis
+the R-bar. Angles are in radians inside the code and in degrees in the
+plots. Attitude is represented by unit quaternions with the scalar part
+first, in the Hamilton convention, describing the rotation from the inertial
+frame to the body frame.
+
+Vectors are written in bold, $\vect r$, their magnitude in plain italics,
+$r$, and time derivatives with dots. The mean motion of the chief is always
+$n$, and $\mu$ is the gravitational parameter of the Earth.

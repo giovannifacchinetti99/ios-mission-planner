@@ -12,10 +12,12 @@ dependencies:
   - liblapack=*=*openblas
   - heyoka.py
   - numpy
+  - scipy
   - matplotlib
   - jupyter
   - sgp4
   - pygmo
+  - osqp
   - pyyaml
   - jinja2
   - weasyprint

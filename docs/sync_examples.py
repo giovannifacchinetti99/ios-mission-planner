@@ -1,12 +1,13 @@
 """
-Copy the example notebooks referenced by the documentation book into
-docs/book/examples/, so Jupyter Book can embed them without the book's
-source root reaching outside docs/book/.
+Copy the example notebooks into docs/book/examples/, so Jupyter Book can
+embed them without the book's source root reaching outside docs/book/.
 
 Run before every `jupyter-book build docs/book`. The destination folder is
-gitignored; this script is the only thing that populates it. Source paths
-are relative to examples/, numbered by code progression, matching the
-numbered folders under examples/ itself.
+gitignored and rebuilt from scratch at every run; this script is the only
+thing that populates it. Every notebook under examples/ is copied, together
+with the small data files some of them read (element sets, scenarios), so a
+new numbered example folder needs no change here, only an entry in
+docs/book/_toc.yml.
 """
 
 import shutil
@@ -16,33 +17,21 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 EXAMPLES_SRC = REPO_ROOT / "examples"
 EXAMPLES_DST = REPO_ROOT / "docs" / "book" / "examples"
 
-FILES = [
-    "01_cw_fundamentals/cw_fundamentals.ipynb",
-    "02_eccentric_chief_relative_motion/eccentric_chief_relative_motion.ipynb",
-    "06_j2_roe_state_transition/j2_roe_state_transition.ipynb",
-    "04_safety_fundamentals/safety_fundamentals.ipynb",
-    "07_differential_drag/differential_drag.ipynb",
-    "08_mission_budget/mission_budget.ipynb",
-    "09_low_thrust_arc_optimization/low_thrust_arc_optimization.ipynb",
-    "10_cosmos2612_iceye_x36_rpo/cosmos2612_iceye_x36_rpo.ipynb",
-    "10_cosmos2612_iceye_x36_rpo/spacetrack_68762.tle",
-    "10_cosmos2612_iceye_x36_rpo/spacetrack_59103.tle",
-    "11_attitude_pointing_control/attitude_pointing_control.ipynb",
-    "12_mission_feasibility_report/mission_feasibility_report.ipynb",
-    "12_mission_feasibility_report/baseline_scenario.yaml",
-    "12_mission_feasibility_report/improved_nav_scenario.yaml",
-    "13_attitude_determination/attitude_determination.ipynb",
-    "14_attitude_estimation_filter/attitude_estimation_filter.ipynb",
-    "15_attitude_coupled_pointing/attitude_coupled_pointing.ipynb",
-]
+COPIED_SUFFIXES = {".ipynb", ".tle", ".yaml"}
 
 
 def main():
-    for relpath in FILES:
+    if EXAMPLES_DST.exists():
+        shutil.rmtree(EXAMPLES_DST)
+
+    for src in sorted(EXAMPLES_SRC.glob("*/*")):
+        if src.suffix not in COPIED_SUFFIXES or ".ipynb_checkpoints" in src.parts:
+            continue
+        relpath = src.relative_to(EXAMPLES_SRC)
         dst = EXAMPLES_DST / relpath
         dst.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(EXAMPLES_SRC / relpath, dst)
-        print(f"synced {relpath}")
+        shutil.copy2(src, dst)
+        print(f"synced {relpath.as_posix()}")
 
 
 if __name__ == "__main__":

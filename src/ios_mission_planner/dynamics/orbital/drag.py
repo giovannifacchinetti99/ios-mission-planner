@@ -1,4 +1,5 @@
 import heyoka as hy
+import numpy as np
 
 from .perturbations import j2_acceleration_symbolic
 from .two_body import two_body_acceleration_symbolic
@@ -168,3 +169,38 @@ def two_body_j2_drag_dynamics_symbolic():
         (vy, ay_2b + ay_j2 + ay_d),
         (vz, az_2b + az_j2 + az_d),
     ]
+
+
+def circular_orbit_decay_rate(a, bc, rho, mu):
+    """
+    Rate of change of the semi-major axis of a circular orbit under drag,
+    from the orbit-averaged energy balance.
+
+    Drag removes orbital energy at the rate a_drag * v. For a circular
+    orbit, with v = sqrt(mu / a) and specific energy -mu / (2a), this
+    gives da/dt = -rho * bc * sqrt(mu * a), neglecting the rotation of the
+    atmosphere (which lowers the relative speed, and hence the decay rate,
+    by several percent for a prograde low Earth orbit).
+
+    Parameters
+    ----------
+    a : float
+        Semi-major axis (orbit radius) [km].
+    bc : float
+        Ballistic coefficient, Cd*A/m [m^2/kg].
+    rho : float
+        Atmospheric density at that radius [kg/m^3].
+    mu : float
+        Gravitational parameter of the central body [km^3/s^2].
+
+    Returns
+    -------
+    float
+        da/dt [km/s], negative.
+
+    Author: Giovanni Facchinetti, 2026
+    Reference: Vallado, Fundamentals of Astrodynamics and Applications
+    """
+
+    # rho * bc is in 1/m; the factor 1e3 converts it to 1/km
+    return -rho * bc * 1e3 * np.sqrt(mu * a)

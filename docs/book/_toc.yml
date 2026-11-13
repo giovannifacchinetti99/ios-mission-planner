@@ -1,47 +1,63 @@
 format: jb-book
 root: intro
+options:
+  numbered: true
 parts:
-  - caption: Dynamics
+  - caption: Orbital foundations
     chapters:
-      - file: dynamics/absolute
-      - file: dynamics/relative
+      - file: foundations/two_body
+      - file: foundations/perturbations
         sections:
-          - file: examples/01_cw_fundamentals/cw_fundamentals
-      - file: dynamics/eccentric_relative
-        sections:
-          - file: examples/02_eccentric_chief_relative_motion/eccentric_chief_relative_motion
-      - file: dynamics/drag
-        sections:
-          - file: examples/07_differential_drag/differential_drag
-  - caption: Relative orbit elements & safety
+          - file: examples/01_orbital_foundations/orbital_foundations
+  - caption: Relative motion
     chapters:
-      - file: dynamics/roe_j2
+      - file: relative/hcw
         sections:
-          - file: examples/06_j2_roe_state_transition/j2_roe_state_transition
-      - file: safety
+          - file: examples/02_cw_fundamentals/cw_fundamentals
+      - file: relative/eccentric
         sections:
-          - file: examples/04_safety_fundamentals/safety_fundamentals
-  - caption: Mission budget
+          - file: examples/03_eccentric_chief_relative_motion/eccentric_chief_relative_motion
+      - file: relative/perturbed
+        sections:
+          - file: examples/04_j2_roe_state_transition/j2_roe_state_transition
+          - file: examples/05_differential_drag/differential_drag
+  - caption: Maneuvers and propulsion
     chapters:
-      - file: budget
+      - file: maneuvers/impulsive
         sections:
-          - file: examples/08_mission_budget/mission_budget
-          - file: examples/09_low_thrust_arc_optimization/low_thrust_arc_optimization
-  - caption: Mission feasibility
+          - file: examples/06_rendezvous_to_safety_ellipse/rendezvous_to_safety_ellipse
+      - file: maneuvers/propulsion
+        sections:
+          - file: examples/07_low_thrust_arc_optimization/low_thrust_arc_optimization
+  - caption: Safety
     chapters:
-      - file: feasibility
+      - file: safety/safety
         sections:
-          - file: examples/12_mission_feasibility_report/mission_feasibility_report
+          - file: examples/08_safety_fundamentals/safety_fundamentals
+          - file: examples/09_rendezvous_safety_assessment/rendezvous_safety_assessment
   - caption: Attitude
     chapters:
-      - file: attitude
+      - file: attitude/dynamics
         sections:
-          - file: examples/11_attitude_pointing_control/attitude_pointing_control
-          - file: examples/13_attitude_determination/attitude_determination
-          - file: examples/14_attitude_estimation_filter/attitude_estimation_filter
-          - file: examples/15_attitude_coupled_pointing/attitude_coupled_pointing
-  - caption: Real case study
+          - file: examples/10_attitude_pointing_control/attitude_pointing_control
+      - file: attitude/estimation
+        sections:
+          - file: examples/11_attitude_determination/attitude_determination
+          - file: examples/12_attitude_estimation_filter/attitude_estimation_filter
+      - file: attitude/pointing
+        sections:
+          - file: examples/13_attitude_coupled_pointing/attitude_coupled_pointing
+  - caption: Mission analysis
     chapters:
-      - file: case_study
+      - file: mission/budget
         sections:
-          - file: examples/10_cosmos2612_iceye_x36_rpo/cosmos2612_iceye_x36_rpo
+          - file: examples/16_mission_budget/mission_budget
+      - file: mission/report
+        sections:
+          - file: examples/19_mission_analysis_report/mission_analysis_report
+      - file: mission/case_study
+        sections:
+          - file: examples/20_cosmos2612_iceye_x36_rpo/cosmos2612_iceye_x36_rpo
+  - caption: Reference
+    chapters:
+      - file: limitations

@@ -9,7 +9,7 @@ from ios_mission_planner.report.pipeline import (
 from ios_mission_planner.report.render import render_html, render_pdf
 from ios_mission_planner.report.scenario import load_scenario
 
-SCENARIOS_DIR = Path(__file__).resolve().parent.parent / "examples" / "12_mission_feasibility_report"
+SCENARIOS_DIR = Path(__file__).resolve().parent.parent / "examples" / "19_mission_analysis_report"
 
 
 def test_load_baseline_scenario():
@@ -26,7 +26,7 @@ def test_baseline_scenario_flags_the_known_collision_probability_risk():
     result = run_feasibility_analysis(scenario)
 
     # cross-checked against the independently-derived ~2.4% Pc finding in
-    # examples/05_rendezvous_safety_assessment for the same kind of burn
+    # the rendezvous_safety_assessment example for the same kind of burn
     assert result.collision_probability > 0.01
     assert result.verdict == NOT_FEASIBLE
     assert any("collision probability" in issue.lower() for issue in result.issues)

@@ -3,6 +3,7 @@ import heyoka as hy
 
 from ios_mission_planner.constants import MU_EARTH, OMEGA_EARTH, R_EARTH
 from ios_mission_planner.dynamics.orbital.drag import (
+    circular_orbit_decay_rate,
     drag_acceleration_symbolic,
     exponential_atmosphere_density,
     two_body_drag_dynamics_symbolic,
@@ -88,3 +89,23 @@ def test_combined_j2_drag_system_runs_and_includes_both_effects():
     assert np.all(np.isfinite(sol))
     r = np.linalg.norm(sol[:3, :], axis=0)
     assert r[-1] < r[0]  # drag still shrinks the orbit with J2 also active
+
+
+def test_circular_decay_rate_matches_numerical_decay_without_atmosphere_rotation():
+    a = R_EARTH + 450.0
+    v = np.sqrt(MU_EARTH / a)
+    state0 = np.array([a, 0.0, 0.0, 0.0, v, 0.0])
+    period = 2 * np.pi * np.sqrt(a**3 / MU_EARTH)
+    bc = 0.02
+
+    pars = [MU_EARTH, bc, RHO0, R0, H, 0.0]  # non-rotating atmosphere
+    t_eval = np.array([0.0, 5 * period])
+    sol = propagate(two_body_drag_dynamics_symbolic(), state0, t_eval, pars=pars).y
+
+    r, v_ = np.linalg.norm(sol[:3, -1]), np.linalg.norm(sol[3:6, -1])
+    a_final = -MU_EARTH / (2 * (0.5 * v_**2 - MU_EARTH / r))
+
+    predicted = circular_orbit_decay_rate(a, bc, RHO0, MU_EARTH) * t_eval[-1]
+
+    assert predicted < 0.0
+    assert np.isclose(a_final - a, predicted, rtol=0.02)

@@ -80,14 +80,14 @@ class VerdictThresholds:
 class MissionScenario:
     """
     A declarative description of an in-orbit servicing mission, loadable
-    from a YAML file, for the Layer 4 feasibility pipeline.
+    from a YAML file, for the feasibility screening pipeline.
 
     This is deliberately a simplified mission template, not a full mission
     designer: it covers a single-plane (or single-plane-change) rendezvous
     from a parking orbit to a 2:1 safety ellipse, a station-keeping dwell,
     docking, and a deorbit disposal burn, the same mission shape built up
-    across examples/03_rendezvous_to_safety_ellipse through
-    examples/08_mission_budget. A mission that does not fit that shape
+    across the rendezvous_to_safety_ellipse and mission_budget examples.
+    A mission that does not fit that shape
     needs a different pipeline, not just a different scenario file.
 
     Author: Giovanni Facchinetti, 2026

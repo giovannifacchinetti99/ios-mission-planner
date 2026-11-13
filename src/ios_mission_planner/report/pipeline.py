@@ -52,13 +52,13 @@ class FeasibilityResult:
 
 def run_feasibility_analysis(scenario):
     """
-    Run the Layer 4 feasibility pipeline for a MissionScenario.
+    Run the feasibility screening pipeline for a MissionScenario.
 
     Every delta-v is computed from the same closed-form building blocks
     validated elsewhere in this project (hohmann_transfer, cw_targeting,
     the rocket equation), not from a fresh nonlinear re-flight of the
     mission: this keeps the pipeline fast and fully determined by the
-    scenario file, at the cost of folding what examples/08_mission_budget
+    scenario file, at the cost of folding what the mission budget example
     flies as two separate burns (a far-range hop, then an ellipse
     insertion correction) into a single closed-form targeting burn here,
     since the discrepancy between those two only exists because of
@@ -191,7 +191,7 @@ def run_feasibility_analysis(scenario):
     if dv_approach / sum(line.delta_v for line in budget_lines) > 0.02:
         issues.append(
             "The far-range approach and ellipse insertion are combined into one closed-form "
-            "burn here; the fully nonlinear flight in examples/08_mission_budget needs a second, "
+            "burn here; the fully nonlinear flight in the mission budget example needs a second, "
             "small correction burn this pipeline does not separately budget for."
         )
 
