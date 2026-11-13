@@ -132,3 +132,78 @@ def cw_targeting(r0, v0, rf, vf, t, n):
     vf_minus = phi_vr @ r0 + phi_vv @ v0_plus
 
     return v0_plus - v0, vf - vf_minus
+
+def cw_system_matrices(n):
+    """
+    State and input matrices of the Clohessy-Wiltshire equations written
+    as a linear system, x_dot = A x + B u, with the state x = [x, y, z,
+    vx, vy, vz] in the LVLH frame and the input u the acceleration
+    applied to the deputy, in the same frame.
+
+    Parameters
+    ----------
+    n : float
+        Mean motion of the chief [rad/s].
+
+    Returns
+    -------
+    a : numpy.ndarray, shape (6, 6)
+    b : numpy.ndarray, shape (6, 3)
+
+    Author: Giovanni Facchinetti, 2026
+    """
+
+    a = np.zeros((6, 6))
+    a[:3, 3:] = np.eye(3)
+    a[3, 0] = 3.0 * n**2
+    a[3, 4] = 2.0 * n
+    a[4, 3] = -2.0 * n
+    a[5, 2] = -(n**2)
+
+    b = np.zeros((6, 3))
+    b[3:, :] = np.eye(3)
+
+    return a, b
+
+
+def cw_discrete_matrices(dt, n):
+    """
+    Exact discretization of the Clohessy-Wiltshire equations for an
+    acceleration held constant over each step (zero-order hold):
+    x[k+1] = Phi x[k] + Gamma u[k].
+
+    Phi is the state transition matrix over dt. Gamma is the integral of
+    the transition matrix over the step applied to the input matrix,
+    available in closed form because the velocity columns of the
+    transition matrix integrate to elementary functions.
+
+    Parameters
+    ----------
+    dt : float
+        Step [s].
+    n : float
+        Mean motion of the chief [rad/s].
+
+    Returns
+    -------
+    phi : numpy.ndarray, shape (6, 6)
+    gamma : numpy.ndarray, shape (6, 3)
+
+    Author: Giovanni Facchinetti, 2026
+    """
+
+    phi = cw_state_transition_matrix(dt, n)
+
+    nt = n * dt
+    c = np.cos(nt)
+    s = np.sin(nt)
+
+    gamma = np.zeros((6, 3))
+    gamma[0, 0] = (1.0 - c) / n**2
+    gamma[0, 1] = 2.0 * (nt - s) / n**2
+    gamma[1, 0] = -2.0 * (nt - s) / n**2
+    gamma[1, 1] = (4.0 * (1.0 - c) - 1.5 * nt**2) / n**2
+    gamma[2, 2] = (1.0 - c) / n**2
+    gamma[3:, :] = phi[:3, 3:]
+
+    return phi, gamma

@@ -2,23 +2,11 @@ from dataclasses import dataclass
 
 import numpy as np
 
-
-def _quaternion_multiply(q, p):
-    """Hamilton product q (x) p, both (q0,q1,q2,q3), q0 scalar first."""
-
-    q0, q1, q2, q3 = q
-    p0, p1, p2, p3 = p
-
-    return np.array([
-        q0 * p0 - q1 * p1 - q2 * p2 - q3 * p3,
-        q0 * p1 + q1 * p0 + q2 * p3 - q3 * p2,
-        q0 * p2 - q1 * p3 + q2 * p0 + q3 * p1,
-        q0 * p3 + q1 * p2 - q2 * p1 + q3 * p0,
-    ])
+from ios_mission_planner.dynamics.attitude.quaternion import quaternion_conjugate, quaternion_multiply
 
 
-def _quaternion_conjugate(q):
-    return np.array([q[0], -q[1], -q[2], -q[3]])
+_quaternion_multiply = quaternion_multiply
+_quaternion_conjugate = quaternion_conjugate
 
 
 def _skew(v):
@@ -104,7 +92,7 @@ def mekf_predict(state, gyro_measurement, dt, gyro_noise_std, bias_noise_std):
     """
 
     omega_hat = np.asarray(gyro_measurement, dtype=float) - state.bias
-    omega_norm = np.linalg.norm(omega_hat)
+    omega_norm = np.sqrt(omega_hat @ omega_hat)
 
     if omega_norm > 1e-12:
         axis = omega_hat / omega_norm
@@ -114,20 +102,24 @@ def mekf_predict(state, gyro_measurement, dt, gyro_noise_std, bias_noise_std):
         delta_q = np.array([1.0, 0.0, 0.0, 0.0])
 
     q_new = _quaternion_multiply(state.q, delta_q)
-    q_new = q_new / np.linalg.norm(q_new)
+    q_new = q_new / np.sqrt(q_new @ q_new)
 
-    f = np.zeros((6, 6))
-    f[:3, :3] = -_skew(omega_hat)
-    f[:3, 3:] = -np.eye(3)
-    phi = np.eye(6) + f * dt
+    # phi = I + F dt, with F = [[-skew(omega), -I], [0, 0]]
+    phi = np.eye(6)
+    phi[:3, :3] -= _skew(omega_hat) * dt
+    phi[0, 3] = phi[1, 4] = phi[2, 5] = -dt
 
-    g = np.zeros((6, 6))
-    g[:3, :3] = -np.eye(3)
-    g[3:, 3:] = np.eye(3)
-    q_continuous = np.diag([gyro_noise_std**2] * 3 + [bias_noise_std**2] * 3)
-    q_discrete = g @ q_continuous @ g.T * dt
-
-    covariance_new = phi @ state.covariance @ phi.T + q_discrete
+    # G Q G' dt, with G = diag(-I, I): the signs cancel and the matrix is
+    # diagonal
+    covariance_new = phi @ state.covariance @ phi.T
+    attitude_noise = gyro_noise_std**2 * dt
+    bias_noise = bias_noise_std**2 * dt
+    covariance_new[0, 0] += attitude_noise
+    covariance_new[1, 1] += attitude_noise
+    covariance_new[2, 2] += attitude_noise
+    covariance_new[3, 3] += bias_noise
+    covariance_new[4, 4] += bias_noise
+    covariance_new[5, 5] += bias_noise
 
     return MEKFState(q=q_new, bias=state.bias.copy(), covariance=covariance_new)
 
@@ -163,7 +155,8 @@ def mekf_update(state, q_measured, measurement_covariance):
     """
 
     q_measured = np.asarray(q_measured, dtype=float)
-    q_measured = q_measured / np.linalg.norm(q_measured)
+    q_measured = q_measured / np.sqrt(q_measured @ q_measured)
+    measurement_covariance = np.asarray(measurement_covariance, dtype=float)
 
     # body-frame error convention (q_measured = q_hat (x) delta_q), matching
     # the process model's F matrix, so left-multiply by conj(q_hat) to solve
@@ -174,26 +167,25 @@ def mekf_update(state, q_measured, measurement_covariance):
         error_q = -error_q  # shortest-rotation convention, avoids an unwinding residual
     residual = 2.0 * error_q[1:]
 
-    h = np.zeros((3, 6))
-    h[:, :3] = np.eye(3)
-
-    innovation_cov = h @ state.covariance @ h.T + np.asarray(measurement_covariance, dtype=float)
-    kalman_gain = state.covariance @ h.T @ np.linalg.inv(innovation_cov)
+    # H = [I, 0] selects the attitude part: H P H' and P H' are blocks of P
+    innovation_cov = state.covariance[:3, :3] + measurement_covariance
+    kalman_gain = state.covariance[:, :3] @ np.linalg.inv(innovation_cov)
 
     correction = kalman_gain @ residual
     delta_theta, delta_bias = correction[:3], correction[3:]
 
     delta_q = np.concatenate([[1.0], 0.5 * delta_theta])
-    delta_q = delta_q / np.linalg.norm(delta_q)
+    delta_q = delta_q / np.sqrt(delta_q @ delta_q)
     q_new = _quaternion_multiply(state.q, delta_q)  # right-multiply: body-frame correction
-    q_new = q_new / np.linalg.norm(q_new)
+    q_new = q_new / np.sqrt(q_new @ q_new)
 
     bias_new = state.bias + delta_bias
 
-    i_kh = np.eye(6) - kalman_gain @ h
+    i_kh = np.eye(6)
+    i_kh[:, :3] -= kalman_gain
     covariance_new = (
         i_kh @ state.covariance @ i_kh.T
-        + kalman_gain @ np.asarray(measurement_covariance, dtype=float) @ kalman_gain.T
+        + kalman_gain @ measurement_covariance @ kalman_gain.T
     )
 
     return MEKFState(q=q_new, bias=bias_new, covariance=covariance_new)

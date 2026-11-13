@@ -1,5 +1,7 @@
 import numpy as np
 
+from ios_mission_planner.linalg import cross3, unit3
+
 
 def quaternion_to_rotation_matrix(q):
     """
@@ -24,7 +26,8 @@ def quaternion_to_rotation_matrix(q):
     Determination and Control
     """
 
-    q0, q1, q2, q3 = np.asarray(q, dtype=float) / np.linalg.norm(q)
+    q = np.asarray(q, dtype=float)
+    q0, q1, q2, q3 = q / np.sqrt(q @ q)
 
     return np.array([
         [1 - 2 * (q2**2 + q3**2), 2 * (q1 * q2 + q0 * q3), 2 * (q1 * q3 - q0 * q2)],
@@ -124,25 +127,21 @@ def triad_attitude(b1, b2, r1, r2):
     Determination and Control
     """
 
-    b1 = np.asarray(b1, dtype=float) / np.linalg.norm(b1)
-    b2 = np.asarray(b2, dtype=float) / np.linalg.norm(b2)
-    r1 = np.asarray(r1, dtype=float) / np.linalg.norm(r1)
-    r2 = np.asarray(r2, dtype=float) / np.linalg.norm(r2)
+    b1 = unit3(b1)
+    b2 = unit3(b2)
+    r1 = unit3(r1)
+    r2 = unit3(r2)
 
     t1_b = b1
-    t2_b = np.cross(b1, b2)
-    t2_b = t2_b / np.linalg.norm(t2_b)
-    t3_b = np.cross(t1_b, t2_b)
+    t2_b = unit3(cross3(b1, b2))
+    t3_b = cross3(t1_b, t2_b)
 
     t1_r = r1
-    t2_r = np.cross(r1, r2)
-    t2_r = t2_r / np.linalg.norm(t2_r)
-    t3_r = np.cross(t1_r, t2_r)
+    t2_r = unit3(cross3(r1, r2))
+    t3_r = cross3(t1_r, t2_r)
 
-    t_b = np.column_stack([t1_b, t2_b, t3_b])
-    t_r = np.column_stack([t1_r, t2_r, t3_r])
-
-    return t_b @ t_r.T
+    # t_b @ t_r.T, with the triads as the columns of t_b and t_r
+    return np.outer(t1_b, t1_r) + np.outer(t2_b, t2_r) + np.outer(t3_b, t3_r)
 
 
 def wahba_svd_attitude(b_vectors, r_vectors, weights=None):
