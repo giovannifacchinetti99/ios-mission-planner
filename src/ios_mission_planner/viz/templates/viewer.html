@@ -1,0 +1,613 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>__TITLE__</title>
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #05070c; color: #e6ebf2;
+               font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; font-size: 13px; }
+  #scene { position: absolute; inset: 0; }
+  #scene canvas { display: block; }
+  .panel { position: absolute; background: rgba(10, 16, 28, 0.78); border: 1px solid rgba(120, 150, 200, 0.25);
+           border-radius: 8px; backdrop-filter: blur(4px); }
+  #hud { top: 12px; left: 12px; padding: 10px 14px; min-width: 232px; }
+  #hud h1 { font-size: 14px; margin: 0 0 2px 0; font-weight: 600; }
+  #hud .sub { color: #8fa3c0; font-size: 11px; margin-bottom: 8px; }
+  #hud table { border-collapse: collapse; width: 100%; }
+  #hud td { padding: 1.5px 0; }
+  #hud td:last-child { text-align: right; font-variant-numeric: tabular-nums; padding-left: 14px; }
+  #phase { display: inline-block; padding: 2px 8px; border-radius: 10px; color: #05070c; font-weight: 600;
+           font-size: 12px; margin-bottom: 6px; }
+  #thrusters { display: flex; gap: 4px; margin-top: 6px; }
+  #thrusters div { flex: 1; text-align: center; font-size: 10px; padding: 2px 0; border-radius: 3px;
+                   background: #1a2438; color: #5c6f8f; }
+  #thrusters div.on { background: #f0a030; color: #05070c; }
+  #result { top: 12px; right: 12px; padding: 10px 14px; display: none; max-width: 330px; }
+  #result h2 { font-size: 13px; margin: 0 0 6px 0; }
+  #result table { border-collapse: collapse; font-size: 11.5px; }
+  #result td { padding: 1.5px 8px 1.5px 0; font-variant-numeric: tabular-nums; }
+  .ok { color: #5fd58a; } .bad { color: #ff6b66; }
+  #controls { left: 12px; right: 12px; bottom: 12px; padding: 8px 12px; display: flex; align-items: center;
+              gap: 10px; flex-wrap: wrap; }
+  #controls button, #controls select { background: #1a2438; color: #e6ebf2; border: 1px solid #33456a;
+              border-radius: 5px; padding: 4px 9px; font-size: 12px; cursor: pointer; }
+  #controls button.active { background: #4c9be8; color: #05070c; border-color: #4c9be8; }
+  #timeline { flex: 1 1 260px; position: relative; height: 26px; min-width: 200px; }
+  #phasebar { position: absolute; left: 0; right: 0; top: 10px; height: 6px; border-radius: 3px; overflow: hidden;
+              background: #1a2438; }
+  #phasebar div { position: absolute; top: 0; bottom: 0; }
+  #slider { position: absolute; left: 0; right: 0; top: 0; width: 100%; height: 26px; margin: 0; background: none;
+            -webkit-appearance: none; appearance: none; }
+  #slider::-webkit-slider-runnable-track { background: transparent; height: 26px; }
+  #slider::-moz-range-track { background: transparent; height: 26px; }
+  #slider::-webkit-slider-thumb { -webkit-appearance: none; width: 4px; height: 22px; margin-top: 2px;
+            background: #fff; border-radius: 2px; cursor: pointer; }
+  #slider::-moz-range-thumb { width: 4px; height: 22px; background: #fff; border: 0; border-radius: 2px; }
+  #clock { font-variant-numeric: tabular-nums; min-width: 92px; text-align: right; }
+  .label { position: absolute; color: #cfe0ff; font-size: 11px; pointer-events: none; white-space: nowrap;
+           text-shadow: 0 0 4px #000, 0 0 2px #000; transform: translate(8px, -50%); }
+  .label::before { content: ""; position: absolute; left: -11px; top: 50%; width: 6px; height: 6px;
+           border: 1px solid currentColor; border-radius: 50%; transform: translateY(-50%); }
+  #message { position: absolute; inset: 0; display: none; align-items: center; justify-content: center;
+             text-align: center; padding: 24px; color: #ffb3b0; white-space: pre-wrap; }
+  #crosshair { position: absolute; left: 50%; top: 50%; width: 46px; height: 46px; margin: -23px 0 0 -23px;
+               border: 1px solid rgba(120, 255, 160, 0.7); border-radius: 50%; display: none; pointer-events: none; }
+  #crosshair::before, #crosshair::after { content: ""; position: absolute; background: rgba(120, 255, 160, 0.7); }
+  #crosshair::before { left: 50%; top: -12px; bottom: -12px; width: 1px; }
+  #crosshair::after { top: 50%; left: -12px; right: -12px; height: 1px; }
+  @media (max-width: 640px) { #hud { min-width: 0; font-size: 11.5px; } #result { display: none !important; } }
+</style>
+</head>
+<body>
+<div id="scene"></div>
+<div id="labels"></div>
+<div id="crosshair"></div>
+
+<div id="hud" class="panel">
+  <h1 id="title"></h1>
+  <div class="sub" id="epoch"></div>
+  <span id="phase"></span>
+  <table>
+    <tr><td>Port to port</td><td id="h-range"></td></tr>
+    <tr><td>Closing speed</td><td id="h-speed"></td></tr>
+    <tr><td>Lateral offset</td><td id="h-lateral"></td></tr>
+    <tr><td>Attitude error</td><td id="h-attitude"></td></tr>
+    <tr><td>Delta-v used</td><td id="h-dv"></td></tr>
+    <tr><td>Wheel momentum</td><td id="h-wheel"></td></tr>
+    <tr><td>Lighting</td><td id="h-light"></td></tr>
+  </table>
+  <div id="thrusters">
+    <div data-axis="0" data-sign="1">+X</div><div data-axis="0" data-sign="-1">-X</div>
+    <div data-axis="1" data-sign="1">+Y</div><div data-axis="1" data-sign="-1">-Y</div>
+    <div data-axis="2" data-sign="1">+Z</div><div data-axis="2" data-sign="-1">-Z</div>
+  </div>
+</div>
+
+<div id="result" class="panel"></div>
+
+<div id="controls" class="panel">
+  <button id="play">Pause</button>
+  <select id="speed" title="Playback speed">
+    <option value="1">1x</option><option value="10">10x</option><option value="60" selected>60x</option>
+    <option value="200">200x</option><option value="600">600x</option>
+  </select>
+  <div id="timeline"><div id="phasebar"></div><input id="slider" type="range" min="0" max="1" step="1" value="0"></div>
+  <span id="clock"></span>
+  <span id="cameras">
+    <button data-cam="overview">Overview</button><button data-cam="side">Side</button>
+    <button data-cam="chase">Chase</button><button data-cam="port">Port camera</button>
+  </span>
+  <button id="toggle-aids" class="active" title="Corridor, sensor cone, navigation estimate">Aids</button>
+</div>
+
+<div id="message"></div>
+
+<script id="data" type="application/json">__DATA__</script>
+<script type="module">
+const D = JSON.parse(document.getElementById('data').textContent);
+const META = D.meta;
+const COUNT = D.t.length;
+const T_END = D.t[COUNT - 1];
+const params = new URLSearchParams(location.search);
+const $ = (id) => document.getElementById(id);
+
+function fail(text) {
+  const box = $('message');
+  box.style.display = 'flex';
+  box.textContent = text;
+}
+window.addEventListener('error', (event) => fail('Viewer error: ' + event.message));
+
+let THREE;
+try {
+  THREE = await import('https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js');
+} catch (error) {
+  fail('The 3D library (three.js) could not be loaded.\nThis page needs an internet connection the first time it is opened.');
+  throw error;
+}
+
+// ---------------------------------------------------------------- frames
+// LVLH (radial, along-track, cross-track) -> scene (X right = along-track, Y up = radial, Z = -cross-track)
+const lvlh = (x, y, z) => new THREE.Vector3(y, x, -z);
+const lvlhArray = (a, i = 0) => lvlh(a[i], a[i + 1], a[i + 2]);
+
+// ---------------------------------------------------------------- renderer
+const container = $('scene');
+const renderer = new THREE.WebGLRenderer({ antialias: true, logarithmicDepthBuffer: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+container.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(45, 1, 0.05, 6e7);
+camera.up.set(0, 1, 0);
+
+const sunLight = new THREE.DirectionalLight(0xfff6e8, 3.2);
+scene.add(sunLight);
+scene.add(sunLight.target);
+const earthshine = new THREE.DirectionalLight(0x7fa8ff, 0.35);
+earthshine.position.set(0, -1, 0);
+scene.add(earthshine);
+const ambient = new THREE.AmbientLight(0x8090b0, 0.22);
+scene.add(ambient);
+
+// ---------------------------------------------------------------- Earth, stars, Sun
+function seededRandom(seed) {
+  let s = seed >>> 0;
+  return () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
+}
+
+function earthTexture() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 1024; canvas.height = 512;
+  const g = canvas.getContext('2d');
+  const sea = g.createLinearGradient(0, 0, 0, 512);
+  sea.addColorStop(0, '#16345e'); sea.addColorStop(0.5, '#1d4f86'); sea.addColorStop(1, '#16345e');
+  g.fillStyle = sea; g.fillRect(0, 0, 1024, 512);
+  const random = seededRandom(7);
+  for (let k = 0; k < 46; k++) {
+    const x = random() * 1024, y = 60 + random() * 392, r = 18 + random() * 70;
+    const land = g.createRadialGradient(x, y, 0, x, y, r);
+    const green = random() > 0.45;
+    land.addColorStop(0, green ? 'rgba(74,112,62,0.95)' : 'rgba(150,126,84,0.95)');
+    land.addColorStop(1, 'rgba(60,96,70,0)');
+    g.fillStyle = land;
+    g.beginPath(); g.ellipse(x, y, r * (1 + random()), r * (0.5 + random() * 0.6), random() * 3.14, 0, 6.3); g.fill();
+  }
+  for (let k = 0; k < 150; k++) {
+    const x = random() * 1024, y = random() * 512, r = 14 + random() * 58;
+    const cloud = g.createRadialGradient(x, y, 0, x, y, r);
+    cloud.addColorStop(0, 'rgba(255,255,255,0.5)'); cloud.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = cloud;
+    g.beginPath(); g.ellipse(x, y, r * 2.2, r * 0.55, random() * 0.8 - 0.4, 0, 6.3); g.fill();
+  }
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.wrapS = THREE.RepeatWrapping;
+  return texture;
+}
+
+const EARTH_RADIUS = META.earth_radius_m;
+const earthCenter = new THREE.Vector3(0, -(EARTH_RADIUS + META.altitude_m), 0);
+const inertial = new THREE.Group();            // things fixed in inertial space turn in the LVLH frame
+inertial.position.copy(earthCenter);
+scene.add(inertial);
+
+const earth = new THREE.Mesh(
+  new THREE.SphereGeometry(EARTH_RADIUS, 160, 96),
+  new THREE.MeshPhongMaterial({ map: earthTexture(), shininess: 8, specular: 0x223344 }));
+earth.rotation.x = Math.PI / 2;                // poles along the scene Z axis, the orbit normal
+inertial.add(earth);
+
+const atmosphere = new THREE.Mesh(
+  new THREE.SphereGeometry(EARTH_RADIUS * 1.011, 96, 64),
+  new THREE.MeshBasicMaterial({ color: 0x58a8ff, transparent: true, opacity: 0.13, side: THREE.BackSide, depthWrite: false }));
+inertial.add(atmosphere);
+
+{
+  const random = seededRandom(11);
+  const positions = new Float32Array(2400 * 3);
+  for (let k = 0; k < 2400; k++) {
+    const u = random() * 2 - 1, phi = random() * 6.2832, r = Math.sqrt(1 - u * u);
+    positions.set([4e7 * r * Math.cos(phi), 4e7 * r * Math.sin(phi), 4e7 * u], 3 * k);
+  }
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  const stars = new THREE.Points(geometry, new THREE.PointsMaterial({ color: 0xffffff, size: 1.6, sizeAttenuation: false }));
+  inertial.add(stars);
+}
+
+const sunDisc = new THREE.Mesh(new THREE.SphereGeometry(3.2e5, 24, 16), new THREE.MeshBasicMaterial({ color: 0xfff2c0 }));
+scene.add(sunDisc);
+
+// ---------------------------------------------------------------- spacecraft
+const foil = new THREE.MeshStandardMaterial({ color: 0xc9a23a, metalness: 0.75, roughness: 0.42 });
+const white = new THREE.MeshStandardMaterial({ color: 0xdfe3ea, metalness: 0.25, roughness: 0.6 });
+const metal = new THREE.MeshStandardMaterial({ color: 0x9aa3b2, metalness: 0.9, roughness: 0.35 });
+const dark = new THREE.MeshStandardMaterial({ color: 0x20252e, metalness: 0.5, roughness: 0.6 });
+const solar = new THREE.MeshStandardMaterial({ color: 0x15296b, metalness: 0.55, roughness: 0.3, emissive: 0x050a22 });
+
+function box(sx, sy, sz, material, x = 0, y = 0, z = 0) {
+  const mesh = new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), material);
+  mesh.position.set(x, y, z);
+  return mesh;
+}
+
+// a cylinder with its axis along a given unit vector, between two distances along it
+function tube(radius, from, to, axis, material, radiusEnd = radius) {
+  const mesh = new THREE.Mesh(new THREE.CylinderGeometry(radiusEnd, radius, Math.abs(to - from), 40), material);
+  mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), axis);
+  mesh.position.copy(axis).multiplyScalar(0.5 * (from + to));
+  return mesh;
+}
+
+function panel(length, width, direction, offset) {
+  const group = new THREE.Group();
+  const wing = box(0.03, width, length, solar);
+  wing.position.z = offset + length / 2;
+  group.add(wing);
+  group.add(box(0.05, 0.05, offset, metal, 0, 0, offset / 2));
+  for (let k = 1; k < 4; k++) group.add(box(0.034, width, 0.012, metal, 0, 0, offset + (k * length) / 4));
+  if (direction < 0) group.rotation.y = Math.PI;
+  return group;
+}
+
+// chief: its body axes are the LVLH axes; the port looks along the port axis
+const chief = new THREE.Group();
+scene.add(chief);
+const portAxis = lvlhArray(META.chief_port_axis).normalize();
+const portPosition = lvlhArray(META.chief_port);
+{
+  // the group below is built with the port on its -X face and then turned so that -X is the port axis
+  const body = new THREE.Group();
+  body.add(box(1.8, 1.7, 1.7, foil, 0.02, 0, 0));
+  body.add(tube(0.20, 0.88, 0.99, new THREE.Vector3(-1, 0, 0), metal));
+  body.add(tube(0.14, 0.90, 1.0, new THREE.Vector3(-1, 0, 0), dark));
+  const wingA = panel(3.4, 1.3, 1, 0.5); wingA.position.z = 0.85; body.add(wingA);
+  const wingB = panel(3.4, 1.3, -1, 0.5); wingB.position.z = -0.85; body.add(wingB);
+  body.add(tube(0.55, 0.85, 1.05, new THREE.Vector3(0, 1, 0), white, 0.08));
+  body.add(box(0.5, 0.5, 0.5, white, 1.1, 0, 0));
+  body.quaternion.setFromUnitVectors(new THREE.Vector3(-1, 0, 0), portAxis);
+  chief.add(body);
+
+  const marker = new THREE.Mesh(new THREE.RingGeometry(0.03, 0.07, 24),
+    new THREE.MeshBasicMaterial({ color: 0x7dffa0, side: THREE.DoubleSide }));
+  marker.position.copy(lvlhArray(META.chief_target)).addScaledVector(portAxis, 0.005);
+  marker.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), portAxis);
+  chief.add(marker);
+}
+
+// deputy: built in its body axes, x toward its docking port
+const deputy = new THREE.Group();
+scene.add(deputy);
+const portBody = new THREE.Vector3(...META.deputy_port_body);
+const plumes = [];
+{
+  const xAxis = new THREE.Vector3(1, 0, 0);
+  deputy.add(box(0.96, 0.8, 0.8, white));
+  deputy.add(box(0.5, 0.82, 0.82, foil, -0.2, 0, 0));
+  deputy.add(tube(0.20, 0.48, portBody.x, xAxis, metal));
+  deputy.add(tube(0.14, 0.5, portBody.x + 0.004, xAxis, dark));
+  const wingA = panel(1.9, 0.7, 1, 0.25); wingA.position.z = 0.4; deputy.add(wingA);
+  const wingB = panel(1.9, 0.7, -1, 0.25); wingB.position.z = -0.4; deputy.add(wingB);
+  const sensor = new THREE.Vector3(...META.sensor_position_body);
+  deputy.add(box(0.1, 0.09, 0.09, dark, portBody.x - 0.07, sensor.y, sensor.z));
+
+  // one plume per thruster direction: a force along +axis comes from exhaust leaving along -axis
+  const plumeMaterial = new THREE.MeshBasicMaterial({ color: 0xffc070, transparent: true, opacity: 0.75, depthWrite: false });
+  const half = [0.5, 0.42, 0.42];
+  for (let axis = 0; axis < 3; axis++) {
+    for (const sign of [1, -1]) {
+      const direction = new THREE.Vector3().setComponent(axis, -sign);
+      const cone = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.7, 16, 1, true), plumeMaterial.clone());
+      cone.quaternion.setFromUnitVectors(new THREE.Vector3(0, -1, 0), direction);
+      cone.position.copy(direction).multiplyScalar(half[axis] + 0.35);
+      cone.visible = false;
+      deputy.add(cone);
+      plumes.push({ cone, axis, sign });
+    }
+  }
+}
+
+// ---------------------------------------------------------------- aids
+const aids = new THREE.Group();
+scene.add(aids);
+
+const fovLength = 30;
+const fovCone = new THREE.Mesh(
+  new THREE.ConeGeometry(Math.tan(META.sensor_fov_deg * Math.PI / 180) * fovLength, fovLength, 40, 1, true),
+  new THREE.MeshBasicMaterial({ color: 0x7dffa0, transparent: true, opacity: 0.06, side: THREE.DoubleSide, depthWrite: false }));
+fovCone.quaternion.setFromUnitVectors(new THREE.Vector3(0, -1, 0), new THREE.Vector3(1, 0, 0));
+const sensorFront = new THREE.Vector3(portBody.x, META.sensor_position_body[1], META.sensor_position_body[2]);
+fovCone.position.copy(sensorFront).setX(sensorFront.x + fovLength / 2);
+deputy.add(fovCone);
+
+{
+  const length = 120;
+  const radius = META.corridor_radius + Math.tan(META.corridor_half_angle_deg * Math.PI / 180) * length;
+  const cone = new THREE.Mesh(
+    new THREE.CylinderGeometry(META.corridor_radius, radius, length, 36, 6, true),
+    new THREE.MeshBasicMaterial({ color: 0xb07ce8, wireframe: true, transparent: true, opacity: 0.16 }));
+  cone.quaternion.setFromUnitVectors(new THREE.Vector3(0, -1, 0), portAxis);
+  cone.position.copy(portPosition).addScaledVector(portAxis, length / 2);
+  aids.add(cone);
+}
+
+const estimate = new THREE.Mesh(new THREE.SphereGeometry(1, 16, 12),
+  new THREE.MeshBasicMaterial({ color: 0x7dffa0, wireframe: true, transparent: true, opacity: 0.5 }));
+aids.add(estimate);
+
+function line(points, color, opacity = 1) {
+  const geometry = new THREE.BufferGeometry().setFromPoints(points);
+  return new THREE.Line(geometry, new THREE.LineBasicMaterial({ color, transparent: opacity < 1, opacity }));
+}
+scene.add(line([lvlh(0, -6000, 0), lvlh(0, 1500, 0)], 0x4c6fa8, 0.5));     // V-bar
+scene.add(line([lvlh(-1500, 0, 0), lvlh(600, 0, 0)], 0x4c6fa8, 0.5));     // R-bar
+
+const pathPoints = [];
+for (let k = 0; k < COUNT; k++) pathPoints.push(lvlhArray(D.p, 3 * k));
+scene.add(line(pathPoints, 0x8fa3c0, 0.28));
+const flown = line(pathPoints, 0xffd27a);
+scene.add(flown);
+
+// ---------------------------------------------------------------- labels
+const labels = [];
+function addLabel(text, position) {
+  const element = document.createElement('div');
+  element.className = 'label';
+  element.textContent = text;
+  $('labels').appendChild(element);
+  const entry = { element, position };
+  labels.push(entry);
+  return entry;
+}
+addLabel('chief', new THREE.Vector3(0, 0, 0));
+const deputyLabel = addLabel('deputy', new THREE.Vector3());
+META.hold_points.forEach((point, k) => addLabel('S' + (k + 1), lvlhArray(point)));
+
+// ---------------------------------------------------------------- playback state
+let time = Math.min(Math.max(parseFloat(params.get('t') ?? '0'), 0), T_END);
+let playing = params.get('play') !== '0';
+let speed = parseFloat(params.get('speed') ?? '60');
+let cameraMode = params.get('cam') ?? 'overview';
+let azimuth = parseFloat(params.get('az') ?? '-0.55');
+let elevation = parseFloat(params.get('el') ?? '0.32');
+let zoom = parseFloat(params.get('zoom') ?? '1');
+let showAids = params.get('aids') !== '0';
+
+const state = { position: new THREE.Vector3(), quaternion: new THREE.Quaternion(), index: 0, range: 1 };
+const qa = new THREE.Quaternion(), qb = new THREE.Quaternion();
+
+function locate(t) {
+  let low = 0, high = COUNT - 1;
+  while (high - low > 1) {
+    const middle = (low + high) >> 1;
+    if (D.t[middle] <= t) low = middle; else high = middle;
+  }
+  const span = D.t[high] - D.t[low];
+  return [low, span > 0 ? Math.min(Math.max((t - D.t[low]) / span, 0), 1) : 0];
+}
+
+function sample(array, index, fraction) {
+  const next = Math.min(index + 1, COUNT - 1);
+  return array[index] + fraction * (array[next] - array[index]);
+}
+
+function update(t) {
+  const [k, f] = locate(t);
+  const next = Math.min(k + 1, COUNT - 1);
+  state.index = k;
+  state.position.copy(lvlhArray(D.p, 3 * k)).lerp(lvlhArray(D.p, 3 * next), f);
+  qa.fromArray(D.q, 4 * k); qb.fromArray(D.q, 4 * next);
+  state.quaternion.copy(qa).slerp(qb, f);
+  deputy.position.copy(state.position);
+  deputy.quaternion.copy(state.quaternion);
+  deputyLabel.position.copy(state.position);
+  state.range = state.position.length();
+
+  // things fixed in inertial space turn about the orbit normal at the orbital rate
+  inertial.rotation.z = META.mean_motion * t;
+
+  const sun = lvlhArray(D.s, 3 * k).lerp(lvlhArray(D.s, 3 * next), f).normalize();
+  const eclipsed = D.e[k] === 1;
+  sunLight.position.copy(sun).multiplyScalar(1e3);
+  sunLight.intensity = eclipsed ? 0.0 : 3.2;
+  ambient.intensity = eclipsed ? 0.16 : 0.22;
+  earthshine.intensity = eclipsed ? 0.06 : 0.35;
+  sunDisc.position.copy(sun).multiplyScalar(3.5e7);
+
+  flown.geometry.setDrawRange(0, k + 2);
+  estimate.position.copy(lvlhArray(D.g, 3 * k).lerp(lvlhArray(D.g, 3 * next), f));
+  estimate.scale.setScalar(Math.max(0.1, 0.004 * state.range));
+  const reach = Math.min(Math.max((state.range - 1.6) / fovLength, 0.01), 1);
+  fovCone.scale.setScalar(reach);
+  fovCone.position.copy(sensorFront).setX(sensorFront.x + reach * fovLength / 2);
+  aids.visible = showAids;
+  fovCone.visible = showAids && (cameraMode === 'overview' || cameraMode === 'side');
+
+  for (const plume of plumes) {
+    const force = D.f[3 * k + plume.axis] * plume.sign;
+    const level = Math.min(Math.max(force / META.max_thrust, 0), 1);
+    plume.cone.visible = level > 0.02;
+    plume.cone.scale.set(0.6 + level, 0.35 + 1.4 * level, 0.6 + level);
+    plume.cone.material.opacity = 0.35 + 0.5 * level;
+  }
+  document.querySelectorAll('#thrusters div').forEach((element) => {
+    const force = D.f[3 * k + Number(element.dataset.axis)] * Number(element.dataset.sign);
+    element.classList.toggle('on', force > 0.02 * META.max_thrust);
+  });
+
+  const phase = META.phases.find((p) => p.id === D.ph[k]) ?? META.phases[0];
+  $('phase').textContent = phase.label;
+  $('phase').style.background = phase.color;
+  const range = sample(D.ax, k, f);
+  $('h-range').textContent = range >= 100 ? range.toFixed(0) + ' m' : range.toFixed(2) + ' m';
+  $('h-speed').textContent = (sample(D.cs, k, f) * 100).toFixed(1) + ' cm/s';
+  const lateral = sample(D.la, k, f);
+  $('h-lateral').textContent = lateral >= 1 ? lateral.toFixed(1) + ' m' : (lateral * 100).toFixed(1) + ' cm';
+  $('h-attitude').textContent = sample(D.ae, k, f).toFixed(2) + ' deg';
+  $('h-dv').textContent = sample(D.dv, k, f).toFixed(2) + ' m/s';
+  $('h-wheel').textContent = (100 * D.wm[k]).toFixed(0) + ' %';
+  $('h-light').textContent = eclipsed ? 'eclipse' : 'sunlit';
+
+  const minutes = Math.floor(t / 60), seconds = Math.floor(t % 60);
+  $('clock').textContent = `${minutes}:${String(seconds).padStart(2, '0')} / ${Math.floor(T_END / 60)}:${String(Math.floor(T_END % 60)).padStart(2, '0')}`;
+  $('slider').value = t;
+  $('result').style.display = t >= T_END - 0.5 ? 'block' : 'none';
+}
+
+// ---------------------------------------------------------------- camera
+const target = new THREE.Vector3(), offset = new THREE.Vector3();
+
+function placeCamera() {
+  camera.fov = cameraMode === 'port' ? 2 * META.sensor_fov_deg : 45;
+  camera.up.set(0, 1, 0);
+  $('crosshair').style.display = cameraMode === 'port' ? 'block' : 'none';
+
+  if (cameraMode === 'chase') {
+    // behind the deputy and above it, with the radial direction up and the Earth below
+    offset.set(-7.0 * zoom, 0, 2.2 * zoom).applyQuaternion(state.quaternion);
+    camera.position.copy(state.position).add(offset);
+    camera.position.y += 2.4 * zoom;
+    target.set(5, 0, 0).applyQuaternion(state.quaternion).add(state.position);
+  } else if (cameraMode === 'port') {
+    offset.copy(sensorFront).setX(sensorFront.x + 0.02).applyQuaternion(state.quaternion);
+    camera.position.copy(state.position).add(offset);
+    target.copy(sensorFront).setX(100).applyQuaternion(state.quaternion).add(state.position);
+  } else {
+    // the view frames both spacecraft: its distance follows their separation
+    target.copy(state.position).multiplyScalar(0.5);
+    const distance = Math.max(9, 1.45 * state.range) * zoom;
+    const az = cameraMode === 'side' ? 0 : azimuth, el = cameraMode === 'side' ? 0 : elevation;
+    offset.set(distance * Math.sin(az) * Math.cos(el), distance * Math.sin(el), distance * Math.cos(az) * Math.cos(el));
+    camera.position.copy(target).add(offset);
+  }
+  camera.lookAt(target);
+  camera.updateProjectionMatrix();
+}
+
+function resize() {
+  const width = container.clientWidth, height = container.clientHeight;
+  renderer.setSize(width, height, false);
+  renderer.domElement.style.width = width + 'px';
+  renderer.domElement.style.height = height + 'px';
+  camera.aspect = width / Math.max(height, 1);
+  camera.updateProjectionMatrix();
+}
+window.addEventListener('resize', resize);
+
+const projected = new THREE.Vector3();
+function placeLabels() {
+  const width = container.clientWidth, height = container.clientHeight;
+  // labels of the hold points are hidden when they fall on the chief or on the deputy
+  const anchors = [];
+  labels.forEach(({ element, position }, index) => {
+    projected.copy(position).project(camera);
+    const x = ((projected.x + 1) / 2) * width, y = ((1 - projected.y) / 2) * height;
+    let visible = projected.z < 1 && Math.abs(projected.x) < 1.05 && Math.abs(projected.y) < 1.05 && cameraMode !== 'port';
+    if (index < 2) anchors.push([x, y]);
+    else if (anchors.some(([ax, ay]) => Math.hypot(x - ax, y - ay) < 34)) visible = false;
+    element.style.display = visible ? 'block' : 'none';
+    element.style.left = x + 'px';
+    element.style.top = y + 'px';
+  });
+}
+
+// ---------------------------------------------------------------- interface
+$('title').textContent = META.title;
+$('epoch').textContent = META.epoch + ' · LVLH frame of the chief';
+$('slider').max = T_END;
+$('speed').value = String(speed);
+
+for (const phase of META.phases) {
+  const segment = document.createElement('div');
+  segment.style.left = (100 * phase.start / T_END) + '%';
+  segment.style.width = Math.max(0.3, 100 * (phase.end - phase.start) / T_END) + '%';
+  segment.style.background = phase.color;
+  segment.title = phase.label;
+  $('phasebar').appendChild(segment);
+}
+
+{
+  const good = META.outcome === 'docked';
+  let html = `<h2 class="${good ? 'ok' : 'bad'}">Outcome: ${META.outcome}${META.abort_reason ? ' (' + META.abort_reason + ')' : ''}</h2>`;
+  if (META.contact.length) {
+    html += '<table>' + META.contact.map((c) =>
+      `<tr><td>${c.name}</td><td>${c.value}</td><td>${c.limit}</td><td class="${c.ok ? 'ok' : 'bad'}">${c.ok ? 'ok' : 'out'}</td></tr>`).join('') + '</table>';
+  }
+  $('result').innerHTML = html;
+}
+
+function setPlaying(value) {
+  playing = value;
+  $('play').textContent = playing ? 'Pause' : 'Play';
+}
+function setCamera(mode) {
+  cameraMode = mode;
+  document.querySelectorAll('#cameras button').forEach((b) => b.classList.toggle('active', b.dataset.cam === mode));
+}
+$('play').addEventListener('click', () => { if (!playing && time >= T_END) time = 0; setPlaying(!playing); });
+$('speed').addEventListener('change', (event) => { speed = parseFloat(event.target.value); });
+$('slider').addEventListener('input', (event) => { time = parseFloat(event.target.value); });
+document.querySelectorAll('#cameras button').forEach((b) => b.addEventListener('click', () => setCamera(b.dataset.cam)));
+$('toggle-aids').addEventListener('click', (event) => { showAids = !showAids; event.target.classList.toggle('active', showAids); });
+window.addEventListener('keydown', (event) => {
+  if (event.code === 'Space') { event.preventDefault(); $('play').click(); }
+});
+
+let dragging = null;
+const pointers = new Map();
+let pinch = 0;
+renderer.domElement.addEventListener('pointerdown', (event) => {
+  pointers.set(event.pointerId, [event.clientX, event.clientY]);
+  dragging = [event.clientX, event.clientY];
+  renderer.domElement.setPointerCapture(event.pointerId);
+});
+renderer.domElement.addEventListener('pointermove', (event) => {
+  if (!pointers.has(event.pointerId)) return;
+  pointers.set(event.pointerId, [event.clientX, event.clientY]);
+  if (pointers.size === 2) {
+    const [a, b] = [...pointers.values()];
+    const distance = Math.hypot(a[0] - b[0], a[1] - b[1]);
+    if (pinch > 0) zoom = Math.min(Math.max(zoom * pinch / distance, 0.15), 12);
+    pinch = distance;
+  } else if (dragging) {
+    azimuth -= (event.clientX - dragging[0]) * 0.006;
+    elevation = Math.min(Math.max(elevation + (event.clientY - dragging[1]) * 0.006, -1.5), 1.5);
+    dragging = [event.clientX, event.clientY];
+    if (cameraMode === 'side') setCamera('overview');
+  }
+});
+const release = (event) => { pointers.delete(event.pointerId); dragging = null; pinch = 0; };
+renderer.domElement.addEventListener('pointerup', release);
+renderer.domElement.addEventListener('pointercancel', release);
+renderer.domElement.addEventListener('wheel', (event) => {
+  event.preventDefault();
+  zoom = Math.min(Math.max(zoom * Math.exp(event.deltaY * 0.0012), 0.15), 12);
+}, { passive: false });
+
+// ---------------------------------------------------------------- loop
+setPlaying(playing);
+setCamera(cameraMode);
+$('toggle-aids').classList.toggle('active', showAids);
+resize();
+
+let previous = performance.now();
+function frame(now) {
+  const elapsed = Math.min((now - previous) / 1000, 0.1);
+  previous = now;
+  if (playing) {
+    time += elapsed * speed;
+    if (time >= T_END) { time = T_END; setPlaying(false); }
+  }
+  update(time);
+  placeCamera();
+  renderer.render(scene, camera);
+  placeLabels();
+  document.body.dataset.ready = '1';
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

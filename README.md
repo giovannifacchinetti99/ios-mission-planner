@@ -1,10 +1,18 @@
 # ios-mission-planner
 
-A Python toolkit for **in-orbit servicing (IOS) mission analysis**: it designs the maneuvers that take a servicer spacecraft from a parking orbit to a safe rendezvous with its target, flies them against nonlinear orbital dynamics instead of the linear model used to design them, checks the result for collision and safety risk, and turns the whole mission into a propellant budget and a report.
+A Python toolkit for **in-orbit servicing (IOS) mission analysis**: it designs the maneuvers that take a servicer spacecraft from a parking orbit to a safe rendezvous with its target, flies them against nonlinear orbital dynamics instead of the linear model used to design them, checks the result for collision and safety risk, simulates the approach and the docking in a closed loop with sensors, navigation, guidance, control and actuators, estimates the probability of success with Monte Carlo campaigns, finds when the docking port is in the light, and turns the whole mission into a propellant budget, a report and a 3D replay.
 
 **[>> Read the documentation](https://giovannifacchinetti99.github.io/ios-mission-planner/)**
 
 The documentation is a book that follows one reference mission from the first principles to the complete analysis. Each chapter gives the theory, describes the functions that implement it, and ends with a notebook that validates the model against an independent reference.
+
+![The 3D viewer during the final approach](docs/images/docking_viewer.png)
+
+*The final approach of the closed-loop simulation in the 3D viewer, with the approach corridor and the field of view of the relative sensor, from [`docking_3d_viewer.ipynb`](examples/21_docking_3d_viewer/docking_3d_viewer.ipynb). The viewer itself is [in the documentation](https://giovannifacchinetti99.github.io/ios-mission-planner/visualization/viewer.html).*
+
+![The closed-loop approach and its navigation error](docs/images/closed_loop_docking.png)
+
+*The approach from 5 km to contact flown by the on-board chain against a nonlinear truth model, and the error of the relative navigation against the three-sigma bound of its filter, from [`closed_loop_docking.ipynb`](examples/15_closed_loop_docking/closed_loop_docking.ipynb).*
 
 ![The far-range approach and the resulting safety ellipse](docs/images/rendezvous_safety_ellipse.png)
 
@@ -29,7 +37,9 @@ The package and the examples follow the order of the book. The notebooks under `
 | III | Impulsive maneuvers, two-impulse targeting, rocket equation, low thrust with pygmo optimization | `dynamics.orbital`, `dynamics.relative`, `budget` | 06, 07 |
 | IV | Keep-out zones, passive safety, approach corridors, collision probability | `safety` | 08, 09 |
 | V | Attitude dynamics and control, TRIAD and Wahba determination, MEKF, target pointing | `dynamics.attitude` | 10 to 13 |
-| VII | Mission budget with margins, automated report from a YAML scenario, a real proximity event reconstructed from public data | `budget`, `report` | 16, 19, 20 |
+| VI | Closed-loop simulation of approach and docking: six-degree-of-freedom truth model, sensors, relative navigation filter, hold points, two-impulse transfer, glideslope, LQR and model predictive control, pulsed thrusters, reaction wheels and momentum management, collision avoidance maneuver | `sim`, `gnc` | 14, 15 |
+| VII | Mission budget with margins, Monte Carlo campaigns of the closed loop, illumination and lighting windows of the docking port, automated reports, a real proximity event reconstructed from public data | `budget`, `sim`, `illumination`, `report` | 16 to 20 |
+| VIII | 3D viewer that replays a simulation in the browser | `viz` | 21 |
 
 ## Installation
 
@@ -57,7 +67,7 @@ python -m ipykernel install --user --name ios-mission-planner --display-name "Py
 pytest
 ```
 
-The suite under `tests/` covers every module in `src/`: conservation laws and round trips for the dynamics, comparisons of closed-form results with numerical propagation, and sign conventions for the safety tools.
+The suite under `tests/` covers every module in `src/`: conservation laws and round trips for the dynamics, comparisons of closed-form results with numerical propagation, sign conventions for the safety tools, the statistics of the sensor and actuator models, the consistency of the navigation filter, the constraints of the predictive controller, and the closed loop itself, from a nominal docking to injected failures.
 
 ## Usage
 
@@ -132,6 +142,45 @@ print(result.verdict)  # "FEASIBLE" / "FEASIBLE WITH CAVEATS" / "NOT FEASIBLE"
 
 html = render_html(result)
 render_pdf(html, "report.pdf")
+```
+
+A closed-loop simulation of the approach and docking, a Monte Carlo campaign and the 3D viewer:
+
+```python
+from ios_mission_planner.sim.config import SimulationConfig
+from ios_mission_planner.sim.monte_carlo import Dispersions, run_monte_carlo
+from ios_mission_planner.sim.simulator import simulate
+from ios_mission_planner.viz.viewer import export_viewer
+
+config = SimulationConfig()          # the reference mission; every parameter can be changed
+result = simulate(config)
+
+print(result.outcome)                # "docked", "aborted", ...
+print(result.contact.values)         # conditions at contact, against the limits of the mechanism
+print(result.delta_v_by_phase())
+
+export_viewer(result, "docking.html")   # a self-contained page, opens in any browser
+
+campaign = run_monte_carlo(config, Dispersions(), n_runs=200, workers=6)
+print(campaign.success_rate, campaign.success_interval(0.95))
+```
+
+On Windows a script that runs a campaign on several processes must do so under `if __name__ == "__main__":`.
+
+The lighting windows of a docking port:
+
+```python
+import numpy as np
+from ios_mission_planner.constants import J2_EARTH, MU_EARTH, R_EARTH
+from ios_mission_planner.illumination.lighting import port_lighting_timeline
+from ios_mission_planner.illumination.sun import julian_date
+
+timeline = port_lighting_timeline(
+    radius=R_EARTH + 500.0, inclination=np.deg2rad(51.6), raan=np.deg2rad(40.0), argument_of_latitude=0.0,
+    jd_epoch=julian_date(2026, 3, 20, 12), duration=3 * 5677.0, step=10.0,
+    mu=MU_EARTH, j2=J2_EARTH, r_eq=R_EARTH, port_normal_lvlh=(0.0, -1.0, 0.0),
+)
+print(timeline.windows())            # (start, end) of each favourable interval [s]
 ```
 
 ## Building the documentation

@@ -53,6 +53,24 @@ ignored: how a rigid body turns, how its orientation is controlled, how it is
 estimated from sensors, and how it is tied to the relative geometry of the
 approach.
 
+Part VI, *Guidance, navigation and control*, closes the loop. A truth model
+of both spacecraft is flown by the functions that a real deputy carries:
+sensors with their errors, a navigation filter, the guidance of the
+approach from hold point to hold point, a regulator and a predictive
+controller, thrusters that deliver pulses and wheels that saturate. It is
+the part in which the models of the previous five are made to work at the
+same time.
+
+Part VII, *Mission analysis*, looks at the mission as a whole. It builds
+the propellant budget with its margins, flies the closed-loop simulation
+hundreds of times with dispersed hardware to estimate the probability of
+success, finds when the docking port is in the light, assembles all of it
+into a report with a verdict, and tests the tools on a real proximity
+event reconstructed from public data.
+
+Part VIII, *Visualization*, describes the viewer that replays a simulation
+in three dimensions.
+
 Each chapter depends only on the chapters before it, and each begins by
 saying what it takes from them.
 

@@ -23,6 +23,8 @@ parse:
 sphinx:
   config:
     html_theme: sphinx_book_theme
+    # standalone pages produced by the notebooks, see docs/sync_examples.py
+    html_extra_path: ["_extra"]
     mathjax3_config:
       tex:
         macros:

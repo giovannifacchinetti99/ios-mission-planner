@@ -47,17 +47,36 @@ parts:
       - file: attitude/pointing
         sections:
           - file: examples/13_attitude_coupled_pointing/attitude_coupled_pointing
+  - caption: Guidance, navigation and control
+    chapters:
+      - file: gnc/simulator
+      - file: gnc/navigation
+      - file: gnc/guidance_control
+        sections:
+          - file: examples/14_final_approach_control/final_approach_control
+          - file: examples/15_closed_loop_docking/closed_loop_docking
   - caption: Mission analysis
     chapters:
       - file: mission/budget
         sections:
           - file: examples/16_mission_budget/mission_budget
+      - file: mission/monte_carlo
+        sections:
+          - file: examples/17_monte_carlo_docking/monte_carlo_docking
+      - file: mission/illumination
+        sections:
+          - file: examples/18_illumination_analysis/illumination_analysis
       - file: mission/report
         sections:
           - file: examples/19_mission_analysis_report/mission_analysis_report
       - file: mission/case_study
         sections:
           - file: examples/20_cosmos2612_iceye_x36_rpo/cosmos2612_iceye_x36_rpo
+  - caption: Visualization
+    chapters:
+      - file: visualization/viewer
+        sections:
+          - file: examples/21_docking_3d_viewer/docking_3d_viewer
   - caption: Reference
     chapters:
       - file: limitations
