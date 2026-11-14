@@ -136,6 +136,28 @@ def test_wheels_saturate_without_momentum_management_and_not_with_it(near_hold_c
     assert np.isclose(np.abs(unmanaged.wheel_momentum).max(), 0.05)
 
 
+def test_unloading_does_not_disturb_the_attitude_when_the_wheels_cancel_it():
+    # a wheel that starts above the unloading threshold: the couple fires at once
+    def fly(feedforward):
+        config = make_near_hold_config()
+        config.initial.wheel_momentum = np.array([0.4, 0.0, 0.0])
+        config.deputy.wheels.desaturation_feedforward = feedforward
+        return simulate(config)
+
+    cancelled, opposed = fly(True), fly(False)
+    settle = slice(30, 150)          # after the initial transient, while the wheel is unloaded
+
+    for run in (cancelled, opposed):
+        assert run.outcome == DOCKED
+        assert abs(run.wheel_momentum[150, 0]) < 0.11      # unloaded down to the lower threshold
+
+    # with the couple left to the feedback, the attitude drifts by degrees
+    # before the feedback produces the opposing torque
+    assert np.degrees(opposed.attitude_error[:150]).max() > 2.0
+    assert np.degrees(cancelled.attitude_error[settle]).max() < 0.1
+    assert np.degrees(cancelled.attitude_error[:150]).max() < 0.3 * np.degrees(opposed.attitude_error[:150]).max()
+
+
 def test_timeout_when_the_duration_is_too_short(near_hold_config):
     near_hold_config.max_duration = 100.0
 

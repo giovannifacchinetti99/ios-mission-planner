@@ -311,7 +311,8 @@ def simulate(config=None, truth=None, progress=None):
 
     if truth is None:
         truth = build_truth(config)
-    truth.reset(chief_state, deputy_state, deputy.mass, quaternion, body_rate)
+    truth.reset(chief_state, deputy_state, deputy.mass, quaternion, body_rate,
+                wheel_momentum=initial.wheel_momentum)
 
     # ------------------------------------------------------------------
     # sensors, actuators, navigation
@@ -501,11 +502,17 @@ def simulate(config=None, truth=None, progress=None):
             if active(failures.stuck_thruster_start, failures.stuck_thruster_duration, t):
                 actual = actual + stuck_force
                 mass_flow += np.sum(np.abs(stuck_force)) / (G0 * thr.isp)
-            wheel_torque = wheels.command(torque_command, wheel_momentum, dt)
+            unloading = np.zeros(3)
             if momentum_manager is not None:
                 unloading, unloading_flow = momentum_manager.command(wheel_momentum)
                 disturbance = disturbance + unloading
                 mass_flow += unloading_flow
+            # the on-board software commands the unloading couples, so it
+            # knows their torque: the wheels are asked to cancel it at the
+            # same instant, and the body does not feel it
+            if deputy.wheels.desaturation_feedforward:
+                torque_command = torque_command - unloading
+            wheel_torque = wheels.command(torque_command, wheel_momentum, dt)
 
         # ------------------------------ log
         log["t"][k] = t

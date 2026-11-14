@@ -62,6 +62,19 @@ def test_sampled_dispersions_have_the_requested_spread():
     assert np.isclose(np.log10(density / base.environment.atmosphere_density).std(), 0.3, rtol=0.12)
 
 
+def test_momentum_unloading_is_sized_for_the_dispersed_center_of_mass():
+    # the rule that a failed run of the first campaign exposed: the couple
+    # that unloads the wheels must be stronger than the torque of a burn at
+    # full thrust with the center of mass far from the thrust lines, here
+    # four standard deviations, and weaker than the wheel that opposes it
+    deputy = make_near_hold_config().deputy
+    worst_offset = 4.0 * Dispersions().center_of_mass_offset
+    disturbance = deputy.thrusters.max_force * worst_offset
+
+    assert deputy.wheels.desaturation_torque >= disturbance
+    assert deputy.wheels.desaturation_torque < deputy.wheels.max_torque
+
+
 def test_small_campaign_collects_one_entry_per_run():
     campaign = run_monte_carlo(make_near_hold_config(), NEAR_DISPERSIONS, n_runs=3, first_seed=20)
 

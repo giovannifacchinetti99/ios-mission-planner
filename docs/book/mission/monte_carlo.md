@@ -204,8 +204,9 @@ trials.
 reference mission 200 times with dispersed hardware and initial conditions.
 It reports the outcomes and the interval of the probability of success,
 with the curve of what a campaign without failures can claim as a function
-of its size, the single run that failed, flown again alone to find its cause, the
-distributions of the conditions at contact against their limits, the distribution of the velocity change in total and by phase, and
+of its size, a failure found by an earlier version of the campaign, flown again alone
+to find its cause, and the side effect of its repair, the distributions of
+the conditions at contact against their limits, the distribution of the velocity change in total and by phase, and
 the trajectories. It then degrades the scenario one element at a time to
 find where the design stops working.
 

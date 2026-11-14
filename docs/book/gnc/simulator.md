@@ -178,10 +178,27 @@ oppose it accumulate momentum. Left alone they saturate, and the attitude
 is lost. The remedy is the one the conservation of angular momentum
 requires: an external torque. When the momentum of a wheel exceeds a
 fraction of its capacity, a pair of thrusters firing in opposite directions
-applies a pure torque to the body; the attitude controller, holding the
-attitude, opposes it with the wheel, which is thereby slowed down. The
-couple stays on until the momentum has fallen below a lower threshold, so
-that it does not switch on and off around a single value.
+applies a pure torque to the body, and the wheel is commanded to apply the
+opposite torque at the same instant. The body feels no net torque, and the
+wheel is slowed down. The couple stays on until the momentum has fallen
+below a lower threshold, so that it does not switch on and off around a
+single value.
+
+The cancellation is a feedforward, and it is not a detail. The on-board
+software commands the couple, so it knows its torque without having to
+measure anything. If the wheel were left to oppose the couple through the
+attitude feedback alone, the attitude would have to drift until the
+feedback produced that torque: with the gains of the reference deputy,
+several degrees for a couple of 16 mN m, every time an unloading starts,
+including during the final approach.
+
+The torque of the couple has to be sized. It must be larger than the
+largest disturbance torque that the thrusters can produce, their thrust
+times the largest credible offset of the center of mass, or during a long
+burn the wheel fills faster than it is emptied. And it must be smaller than
+the torque of the wheel, which has to oppose it. For the reference deputy,
+2 N of thrust and an offset of up to 8 mm give 16 mN m, against 20 mN m of
+the wheels.
 
 ## The two docking ports
 

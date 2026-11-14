@@ -107,8 +107,15 @@ axes, with a minimum impulse bit, scale and alignment errors and a center
 of mass offset. The plumes do not push on the chief or contaminate it, and
 the thrust does not depend on how long a thruster has been firing. The
 reaction wheels are ideal within their torque and momentum limits, and the
-couples that unload them are pure torques. Both spacecraft are rigid:
-propellant slosh and flexible appendages are not modelled.
+couples that unload them are pure torques, known exactly on board. Both
+spacecraft are rigid: propellant slosh and flexible appendages are not
+modelled.
+
+The attitude law has no integral term and no estimate of the disturbance
+torque. During a long burn with the center of mass off the thrust lines the
+pointing error settles at a few degrees, and the thrust direction is off by
+as much until the burn ends; the mid-course corrections absorb the
+consequence.
 
 The simulation ends at first contact. What happens afterward, the capture
 and the dynamics of the mated spacecraft, is not simulated, and the limits

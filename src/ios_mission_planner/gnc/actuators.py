@@ -184,11 +184,14 @@ class MomentumManager:
     no longer controls its axis. The remedy is an external torque that
     only thrusters can provide. When the momentum of a wheel exceeds a
     threshold, a pair of thrusters firing in opposite directions applies
-    a pure torque to the body; the attitude controller, holding the
-    attitude, opposes it with the wheel, which is thereby slowed down.
-    The couple stays on until the momentum has fallen below a lower
-    threshold, so that it does not switch on and off around a single
-    value.
+    a pure torque to the body, and the wheel is commanded to apply the
+    opposite torque at the same instant: the body feels no net torque,
+    and the wheel is slowed down. The cancellation matters. If the wheel
+    were left to oppose the couple through the attitude feedback alone,
+    the attitude would have to drift by degrees before the feedback
+    produced enough torque. The couple stays on until the momentum has
+    fallen below a lower threshold, so that it does not switch on and
+    off around a single value.
 
     Attributes
     ----------
@@ -196,8 +199,9 @@ class MomentumManager:
         Momentum at which the unloading of a wheel starts and stops
         [N m s].
     torque : float
-        Torque of the thruster couple [N m]. It must stay below what the
-        wheel can oppose.
+        Torque of the thruster couple [N m]. It must exceed the largest
+        disturbance torque that the thrusters can produce, and stay
+        below what the wheel can oppose.
     arm : float
         Distance between the two thrusters of a couple [m].
     isp : float

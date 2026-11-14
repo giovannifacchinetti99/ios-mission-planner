@@ -95,11 +95,18 @@ class WheelConfig:
     max_torque: float = 0.02                  # [N m]
     max_momentum: float = 0.5                 # [N m s]
     # momentum management: thruster couples unload a wheel when it gets
-    # close to its limit
+    # close to its limit. The torque of the couple must exceed the largest
+    # disturbance torque that the thrusters can produce (their thrust times
+    # the largest credible offset of the center of mass: 2 N and 8 mm give
+    # 0.016 N m) and stay below max_torque, or the wheel cannot oppose it
     desaturation_enabled: bool = True
     desaturation_start: float = 0.6           # fraction of max_momentum
     desaturation_stop: float = 0.2
-    desaturation_torque: float = 0.008        # of the thruster couple [N m]
+    desaturation_torque: float = 0.016        # of the thruster couple [N m]
+    # the wheels are commanded to cancel the torque of the couple, which the
+    # on-board software knows; without this the attitude feedback has to
+    # find it out from the attitude error that the couple causes
+    desaturation_feedforward: bool = True
     desaturation_arm: float = 0.5             # between the two thrusters [m]
 
 
@@ -234,6 +241,7 @@ class InitialConditions:
     velocity_offset: np.ndarray = _array(0.01, -0.02, 0.01)
     attitude_error: np.ndarray = _array(0.03, -0.04, 0.05)  # rotation vector [rad]
     body_rate: np.ndarray = _array(0.0, 0.0, 0.0)           # relative to the command [rad/s]
+    wheel_momentum: np.ndarray = _array(0.0, 0.0, 0.0)      # stored in the wheels [N m s]
     navigation_position_error: np.ndarray = _array(25.0, -20.0, 15.0)
     navigation_velocity_error: np.ndarray = _array(0.03, 0.02, -0.02)
 
