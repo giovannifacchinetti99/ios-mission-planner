@@ -260,6 +260,34 @@ class FailureConfig:
     stuck_thruster_start: float = None        # [s]
     stuck_thruster_duration: float = 0.0
     stuck_thruster_force: np.ndarray = _array(0.0, 0.0, 0.0)    # body frame [N]
+    # the velocity estimate of the relative navigation is wrong by a
+    # constant vector, as in the DART mishap: guidance, control and the
+    # abort logic all see the biased estimate, while the filter itself
+    # keeps tracking the truth, so the measurements cannot remove the bias
+    navigation_velocity_bias_start: float = None   # [s]
+    navigation_velocity_bias_duration: float = 0.0
+    navigation_velocity_bias: np.ndarray = _array(0.0, 0.0, 0.0)  # LVLH [m/s]
+    # the main chain brakes late at a hold point: once the estimated
+    # distance to the hold falls below late_braking_distance, the part of
+    # the command that slows the deputy along the approach axis is
+    # suppressed for late_braking_duration seconds. The fault is armed
+    # from late_braking_start on and acts once
+    late_braking_start: float = None          # [s]
+    late_braking_duration: float = 0.0        # the delay [s]
+    late_braking_hold: int = 2                # 0, 1 or 2 for S1, S2, S3
+    late_braking_distance: float = 1.0        # [m]
+    # the attitude estimate used by the attitude controller and by the
+    # conversion of the force command to the body frame is wrong by a
+    # rotation the software does not know about: the controller steers the
+    # true attitude away from the commanded one, and the thrusters fire in
+    # rotated directions. The relative navigation is not affected. A bias
+    # that appears in one step shows up as a jump in the estimated pointing
+    # error; one that grows over attitude_bias_ramp seconds is followed by
+    # the controller and stays unnoticed
+    attitude_bias_start: float = None         # [s]
+    attitude_bias_duration: float = 0.0
+    attitude_bias: np.ndarray = _array(0.0, 0.0, 0.0)           # rotation vector, body frame [rad]
+    attitude_bias_ramp: float = 0.0           # time to grow from zero to attitude_bias [s]
 
 
 @dataclass
