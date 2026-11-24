@@ -299,7 +299,9 @@ can ask the main chain to abort, which makes the mission manager start its
 collision avoidance maneuver from the next step, whatever the phase. Its
 decisions are recorded among the events of the run whenever they change.
 Without a supervisor and without the new failures, the simulation produces
-exactly the same results as before they were introduced.
+exactly the same results as before they were introduced. The chapter
+{doc}`../supervision/failures` measures what each failure does to the
+approach and builds a minimal supervisor on this interface.
 
 ## In the code
 

@@ -40,6 +40,7 @@ The package and the examples follow the order of the book. The notebooks under `
 | VI | Closed-loop simulation of approach and docking: six-degree-of-freedom truth model, sensors, relative navigation filter, hold points, two-impulse transfer, glideslope, LQR and model predictive control, pulsed thrusters, reaction wheels and momentum management, collision avoidance maneuver | `sim`, `gnc` | 14, 15 |
 | VII | Mission budget with margins, Monte Carlo campaigns of the closed loop, illumination and lighting windows of the docking port, automated reports, a real proximity event reconstructed from public data | `budget`, `sim`, `illumination`, `report` | 16 to 20 |
 | VIII | 3D viewer that replays a simulation in the browser | `viz` | 21 |
+| IX | Failures that corrupt what the software believes (biased velocity and attitude estimates, late braking) and an independent supervisor plugged into the simulation | `sim` | 22 |
 
 ## Installation
 
