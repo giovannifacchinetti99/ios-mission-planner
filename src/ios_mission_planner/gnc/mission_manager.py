@@ -456,6 +456,23 @@ class MissionManager:
 
         return None
 
+    def request_abort(self, t, reason="supervisor request"):
+        """
+        Start the collision avoidance maneuver on an external request, in
+        any phase, unless the mission is over or already aborting. The
+        maneuver is commanded from the next call of update on.
+
+        Returns
+        -------
+        bool
+            Whether the request started an abort.
+        """
+
+        if self.finished or self.phase in (Phase.ABORT, Phase.DOCKED):
+            return False
+        self._start_abort(t, reason)
+        return True
+
     def _start_abort(self, t, reason):
         self.abort_reason = reason
         self._enter(Phase.ABORT, t, reason)

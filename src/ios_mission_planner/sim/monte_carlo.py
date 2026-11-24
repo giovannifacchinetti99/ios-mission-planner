@@ -120,8 +120,9 @@ def sample_config(base, dispersions, seed):
 def _run_one(arguments):
     """One run, reduced to the numbers the campaign keeps."""
 
-    base, dispersions, seed, trajectory_step = arguments
-    result = simulate(sample_config(base, dispersions, seed))
+    base, dispersions, seed, trajectory_step, supervisor_factory = arguments
+    supervisor = None if supervisor_factory is None else supervisor_factory(seed)
+    result = simulate(sample_config(base, dispersions, seed), supervisor=supervisor)
 
     contact = [np.nan] * len(CONTACT_QUANTITIES)
     violations = []
@@ -145,6 +146,7 @@ def _run_one(arguments):
         "final_navigation_error": float(np.linalg.norm(estimate_error[-1])),
         "trajectory": result.relative_state[::trajectory_step, :3].copy(),
         "trajectory_time": result.t[::trajectory_step].copy(),
+        "supervisor_events": [event for event in result.events if event[2].startswith("supervisor")],
     }
 
 
@@ -217,6 +219,9 @@ class MonteCarloResult:
         True relative position of each run, sampled coarsely [m, s].
     limits : dict
         Limits of the contact conditions, by name.
+    supervisor_events : list of list
+        Events recorded by the supervisor in each run, (time, phase,
+        note); empty lists when the campaign had no supervisor.
 
     Author: Giovanni Facchinetti, 2026
     """
@@ -235,6 +240,7 @@ class MonteCarloResult:
     trajectories: list = field(repr=False)
     trajectory_times: list = field(repr=False)
     limits: dict = field(default_factory=dict)
+    supervisor_events: list = field(default_factory=list, repr=False)
 
     @property
     def n_runs(self):
@@ -285,7 +291,7 @@ class MonteCarloResult:
 
 
 def run_monte_carlo(base, dispersions=None, n_runs=100, first_seed=1, workers=1, trajectory_step=10,
-                    progress=None):
+                    progress=None, supervisor_factory=None):
     """
     Run a Monte Carlo campaign of the closed-loop simulation: the same
     mission flown many times, each with its own draw of the dispersed
@@ -306,6 +312,10 @@ def run_monte_carlo(base, dispersions=None, n_runs=100, first_seed=1, workers=1,
         One sample of the trajectory is kept every trajectory_step steps.
     progress : callable, optional
         Called with the number of runs completed.
+    supervisor_factory : callable, optional
+        Function seed -> supervisor, called once per run to build a fresh
+        supervisor for simulate. With several workers it must be picklable:
+        a function defined at module level, or a functools.partial of one.
 
     Returns
     -------
@@ -315,7 +325,7 @@ def run_monte_carlo(base, dispersions=None, n_runs=100, first_seed=1, workers=1,
     """
 
     dispersions = Dispersions() if dispersions is None else dispersions
-    arguments = [(base, dispersions, first_seed + k, trajectory_step) for k in range(n_runs)]
+    arguments = [(base, dispersions, first_seed + k, trajectory_step, supervisor_factory) for k in range(n_runs)]
 
     runs = []
     if workers <= 1:
@@ -353,4 +363,5 @@ def run_monte_carlo(base, dispersions=None, n_runs=100, first_seed=1, workers=1,
             "roll misalignment [deg]": limits.roll_misalignment_deg,
             "angular rate [deg/s]": limits.angular_rate_deg_s,
         },
+        supervisor_events=[run["supervisor_events"] for run in runs],
     )

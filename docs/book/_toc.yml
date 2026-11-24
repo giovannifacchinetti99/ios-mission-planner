@@ -77,6 +77,11 @@ parts:
       - file: visualization/viewer
         sections:
           - file: examples/21_docking_3d_viewer/docking_3d_viewer
+  - caption: Failures and supervision
+    chapters:
+      - file: supervision/failures
+        sections:
+          - file: examples/22_failures_and_supervision/failures_and_supervision
   - caption: Reference
     chapters:
       - file: limitations

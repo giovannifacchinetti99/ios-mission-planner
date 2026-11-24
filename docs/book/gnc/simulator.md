@@ -235,6 +235,74 @@ after the deputy has moved away. If the port plane is crossed in a phase
 other than the final approach, the run is a collision. And if neither
 happens within the maximum duration, it is a timeout.
 
+## Injected failures
+
+A loop that only flies nominal missions says little about safety, so the
+simulation can break parts of it on purpose, each from a start time and for
+a duration. Two failures act on hardware. The relative sensor can stop
+returning measurements, and a thruster can stay open, adding a constant
+force along a body axis that the navigation does not know about.
+
+Three more act on the software, and they are the dangerous kind, because
+the main chain keeps working with a wrong picture of the world without
+knowing it. The first is a constant error on the velocity estimate of the
+relative navigation, the kind of failure behind the collision of the DART
+spacecraft with its target in 2005. Guidance, control and the abort logic all see the biased
+estimate, while the filter underneath keeps tracking the truth, so the
+position measurements cannot remove the error. A bias that makes the deputy
+believe it closes more slowly than it does is the worst case: the guidance
+accelerates to restore the planned speed, and the check on the closing
+speed, which compares the same biased estimate with its limit, stays quiet
+while the true speed exceeds it.
+
+The second is a late brake at a hold point. Once the estimated distance to
+the chosen hold falls below a threshold, the part of the command that slows
+the deputy along the approach axis is suppressed for a given delay, and the
+deputy coasts past the point where it should have stopped. At the last hold
+the closing speed is a few centimetres per second, so a delay of a minute
+carries it a couple of metres closer to the chief than planned.
+
+The third is an error on the attitude estimate used by the attitude control
+and by the conversion of the force command into the body axes. The
+controller steers the true attitude away from the commanded one by that
+error, and the thrusters fire in directions rotated by the same amount. If
+the error appears in a single step, the controller sees a sudden pointing
+error and the abort logic reacts. If it grows over a ramp of a minute or
+two, as an undetected drift would, the controller follows it and nothing on
+board notices; only its consequences, a lateral drift or a target leaving
+the field of view of the relative sensor, eventually do.
+
+## A second layer: the supervisor
+
+Crewed and high-value vehicles do not rely on the main chain alone. The
+Automated Transfer Vehicle carried a monitoring and safety unit, separate
+from its main computer, with the authority to stop an approach. The
+investigation of DART drew the same lesson: collision avoidance should rely
+on information independent of the navigation that guides the approach.
+
+The simulation lets such a layer be plugged into the loop as a supervisor,
+a function called once per step after the main chain has computed its force
+command and before the thrusters execute it. It receives the time, the true
+relative state of the deputy, its true attitude with respect to the LVLH
+frame, and the force about to be commanded, and nothing else: no estimate,
+no covariance, no state of the guidance or the mission manager. A
+supervisor meant to be independent of the main navigation has to build its
+own knowledge from those truths, typically by simulating its own sensor
+with its own errors, and the interface makes it impossible to cheat by
+peeking at the main estimate.
+
+A supervisor can do two things. It can replace the force command, which
+then goes to the same thrusters with the same limits and errors: setting
+some components to zero inhibits thrusters that would fire in a dangerous
+direction, and a command of its own flies its own avoidance maneuver. And it
+can ask the main chain to abort, which makes the mission manager start its
+collision avoidance maneuver from the next step, whatever the phase. Its
+decisions are recorded among the events of the run whenever they change.
+Without a supervisor and without the new failures, the simulation produces
+exactly the same results as before they were introduced. The chapter
+{doc}`../supervision/failures` measures what each failure does to the
+approach and builds a minimal supervisor on this interface.
+
 ## In the code
 
 The truth model is in `sim/truth.py`. `docking_truth_dynamics_symbolic`
@@ -268,6 +336,14 @@ returns a `SimulationResult` with the time histories of the true and
 estimated quantities, the list of events, the outcome and the assessment of
 the contact.
 
+The failures are the fields of `FailureConfig`. The supervisor is the
+optional argument `supervisor` of `simulate`; `sim/supervisor.py` defines
+what it receives, a `SupervisorSample` of read-only arrays, and what it may
+return, a `SupervisorDecision`. `run_monte_carlo` accepts a
+`supervisor_factory`, a function of the seed that builds a fresh supervisor
+for each run, so that a campaign can be flown with and without the second
+layer.
+
 ## In the notebook
 
 {doc}`../examples/15_closed_loop_docking/closed_loop_docking` flies the
@@ -287,5 +363,7 @@ saturation of the wheels and its cure.
 2. F. L. Markley, J. L. Crassidis, *Fundamentals of Spacecraft Attitude
    Determination and Control*, Springer, 2014.
 3. B. Wie, *Space Vehicle Dynamics and Control*, 2nd edition, AIAA, 2008.
+4. NASA, *Overview of the DART Mishap Investigation Results*, 2006,
+   https://www.nasa.gov/pdf/148072main_DART_mishap_overview.pdf.
 4. International Docking System Standard (IDSS), *Interface Definition
    Document*.

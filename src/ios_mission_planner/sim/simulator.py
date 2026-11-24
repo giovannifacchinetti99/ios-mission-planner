@@ -25,6 +25,7 @@ from ios_mission_planner.illumination.sun import julian_date_from_datetime, sun_
 from ios_mission_planner.linalg import cross3, norm3
 from ios_mission_planner.sim.config import SimulationConfig
 from ios_mission_planner.sim.docking import PortState, assess_contact, port_state
+from ios_mission_planner.sim.supervisor import SupervisorSample
 from ios_mission_planner.sim.truth import TruthModel
 
 DOCKED = "docked"
@@ -209,7 +210,7 @@ def _lvlh_frame(chief_state):
     return np.array([r_hat, cross3(h_hat, r_hat), h_hat]), h_norm / r_norm**2
 
 
-def simulate(config=None, truth=None, progress=None):
+def simulate(config=None, truth=None, progress=None, supervisor=None):
     """
     Run one closed-loop simulation of the approach and docking.
 
@@ -218,10 +219,12 @@ def simulate(config=None, truth=None, progress=None):
     estimates of attitude and relative state with those measurements. The
     mission manager and the guidance decide, from the estimates only,
     where the deputy should go and where it should point. The controllers
-    turn that into a force and a torque. The actuators deliver them as
-    well as their limits allow. The truth model then advances by one
-    step under the force and torque really produced, and the navigation
-    predicts its estimates forward with what it believes was commanded.
+    turn that into a force and a torque. An optional supervisor may then
+    replace the force command or ask for an abort. The actuators deliver
+    the commands as well as their limits allow. The truth model then
+    advances by one step under the force and torque really produced, and
+    the navigation predicts its estimates forward with what it believes
+    was commanded.
 
     The simulation ends when the docking ports touch, when a collision
     avoidance maneuver has been flown, or at the maximum duration.
@@ -235,6 +238,12 @@ def simulate(config=None, truth=None, progress=None):
         environment and spacecraft.
     progress : callable, optional
         Called with (time, phase) once per simulated minute.
+    supervisor : callable, optional
+        Called once per step, after the main chain has computed its force
+        command and before the thrusters execute it, with a
+        ios_mission_planner.sim.supervisor.SupervisorSample; it returns
+        None or a SupervisorDecision. See that module. Its decisions are
+        recorded in the events of the result when they change.
 
     Returns
     -------
@@ -395,6 +404,16 @@ def simulate(config=None, truth=None, progress=None):
 
     failures = config.failures
     stuck_force = np.asarray(failures.stuck_thruster_force, dtype=float)
+    velocity_bias = np.asarray(failures.navigation_velocity_bias, dtype=float)
+    attitude_bias = np.asarray(failures.attitude_bias, dtype=float)
+    # the leg of the approach that ends at each hold point
+    braking_leg = {1: Phase.TRANSFER, 2: Phase.APPROACH}
+    if failures.late_braking_start is not None and failures.late_braking_hold not in braking_leg:
+        raise ValueError("late_braking_hold must be 1 (S2) or 2 (S3)")
+    late_braking_from = None
+
+    supervisor_events = []
+    last_decision = None
 
     def active(start, duration, time):
         return start is not None and start <= time < start + duration
@@ -464,13 +483,41 @@ def simulate(config=None, truth=None, progress=None):
 
         estimate = navigation.state
         estimate_std = np.sqrt(np.diag(navigation.covariance))
+        if active(failures.navigation_velocity_bias_start, failures.navigation_velocity_bias_duration, t):
+            estimate = estimate.copy()
+            estimate[3:] += velocity_bias
+
+        # the attitude that the attitude control and the thruster mapping use
+        control_attitude = attitude_filter.q
+        control_body_to_lvlh = estimated_body_to_lvlh
+        if active(failures.attitude_bias_start, failures.attitude_bias_duration, t):
+            grown = 1.0
+            if failures.attitude_bias_ramp > 0.0:
+                grown = min(1.0, (t - failures.attitude_bias_start) / failures.attitude_bias_ramp)
+            control_attitude = quaternion_multiply(
+                attitude_filter.q, rotation_vector_to_quaternion(grown * attitude_bias),
+            )
+            control_body_to_lvlh = lvlh @ quaternion_to_rotation_matrix(control_attitude).T
 
         # ------------------------------ guidance and control
-        attitude_error_estimate = quaternion_to_rotation_vector(quaternion_error(attitude_filter.q, previous_command))
+        attitude_error_estimate = quaternion_to_rotation_vector(quaternion_error(control_attitude, previous_command))
         acceleration_command = manager.update(
             t, estimate, estimate_std[:3], t - last_measurement_time,
             np.sqrt(attitude_error_estimate @ attitude_error_estimate), applied_acceleration,
         )
+
+        if failures.late_braking_start is not None and t >= failures.late_braking_start:
+            hold = failures.late_braking_hold
+            if late_braking_from is None and manager.phase == braking_leg[hold]:
+                to_go = (estimate[:3] - manager.hold_positions[hold]) @ axis
+                if to_go < failures.late_braking_distance:
+                    late_braking_from = t
+            if (late_braking_from is not None and t < late_braking_from + failures.late_braking_duration
+                    and manager.phase != Phase.ABORT):
+                # the deputy closes along -axis: braking pushes along +axis
+                braking = acceleration_command @ axis
+                if braking > 0.0:
+                    acceleration_command = acceleration_command - braking * axis
 
         q_command = pointing_quaternion(
             lvlh.T, boresight_direction(estimate[:3]), lateral_2, deputy.port_axis_body,
@@ -484,14 +531,31 @@ def simulate(config=None, truth=None, progress=None):
         previous_command = q_command
 
         torque_command = quaternion_feedback_torque(
-            attitude_filter.q, gyro_measurement - attitude_filter.bias, q_command, command_rate_body,
+            control_attitude, gyro_measurement - attitude_filter.bias, q_command, command_rate_body,
             inertia, wheel_momentum, kp, kd, max_slew_rate,
         )
 
-        force_command = mass_estimate * (estimated_body_to_lvlh.T @ acceleration_command)
+        force_command = mass_estimate * (control_body_to_lvlh.T @ acceleration_command)
         largest = np.max(np.abs(force_command))
         if largest > thrusters.max_force:
             force_command = force_command * (thrusters.max_force / largest)
+
+        # ------------------------------ supervisor
+        if supervisor is not None and not manager.finished:
+            decision = supervisor(SupervisorSample.build(t, relative, body_to_lvlh, force_command))
+            if decision is not None:
+                if decision.force_command is not None:
+                    force_command = np.array(decision.force_command, dtype=float)
+                    largest = np.max(np.abs(force_command))
+                    if largest > thrusters.max_force:
+                        force_command = force_command * (thrusters.max_force / largest)
+                if decision.request_abort:
+                    manager.request_abort(t)
+            summary = None if decision is None else (
+                decision.force_command is not None, decision.request_abort, decision.note)
+            if summary != last_decision:
+                supervisor_events.append((t, manager.phase, _supervisor_note(decision)))
+                last_decision = summary
 
         # ------------------------------ actuators
         if manager.finished:
@@ -566,7 +630,7 @@ def simulate(config=None, truth=None, progress=None):
         delta_v += np.sum(np.abs(actual)) / mass * dt
         mass_estimate -= np.sum(np.abs(intended)) / (G0 * thr.isp) * dt
 
-        applied_acceleration = estimated_body_to_lvlh @ intended / mass_estimate
+        applied_acceleration = control_body_to_lvlh @ intended / mass_estimate
         navigation.predict(applied_acceleration)
 
         gyro_measurement = gyro.measure(0.5 * (body_rate + truth.body_rate), dt, rng)
@@ -576,9 +640,11 @@ def simulate(config=None, truth=None, progress=None):
         k += 1
 
     result = {name: values[:k + 1] for name, values in log.items()}
+    # sorted by time, the supervisor's after the manager's at the same time
+    events = sorted(manager.events + supervisor_events, key=lambda event: event[0])
 
     return SimulationResult(
-        **result, events=[(time, PHASE_LABELS[phase], note) for time, phase, note in manager.events],
+        **result, events=[(time, PHASE_LABELS[phase], note) for time, phase, note in events],
         outcome=outcome, contact_state=contact_state, contact=contact,
         abort_reason=manager.abort_reason, config=config,
         hold_positions=[p.copy() for p in manager.hold_positions],
@@ -602,6 +668,20 @@ def build_truth(config):
         chief.ballistic_coefficient, deputy.ballistic_coefficient, deputy.inertia,
         gravity_gradient=env.gravity_gradient,
     )
+
+
+def _supervisor_note(decision):
+    """Text of the event recorded when a supervisor decision changes."""
+
+    if decision is None:
+        return "supervisor: released"
+    actions = []
+    if decision.force_command is not None:
+        actions.append("force override")
+    if decision.request_abort:
+        actions.append("abort request")
+    text = ", ".join(actions) if actions else "no action"
+    return f"supervisor: {text}" + (f" ({decision.note})" if decision.note else "")
 
 
 def _interpolate_port(before, after, fraction):
